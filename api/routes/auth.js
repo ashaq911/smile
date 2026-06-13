@@ -13,7 +13,7 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
   }
   const token = generateToken(user);
-  res.json({ token, user: { id: user.id, username: user.username, role: user.role, storeid: user.storeid, name: user.name } });
+  res.json({ token, user: { id: user.id, username: user.username, role: user.role, storeId: user.storeId, name: user.name } });
 });
 
 router.post('/register', async (req, res) => {
@@ -26,7 +26,7 @@ router.post('/register', async (req, res) => {
     .run(username, hash, role || 'customer', name || '', storeId || null);
   const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(result.rows[0].id);
   const token = generateToken(user);
-  res.json({ token, user: { id: user.id, username: user.username, role: user.role, storeid: user.storeid, name: user.name } });
+  res.json({ token, user: { id: user.id, username: user.username, role: user.role, storeId: user.storeId, name: user.name } });
 });
 
 router.get('/me', verifyToken, async (req, res) => {
