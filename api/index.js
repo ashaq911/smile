@@ -16,6 +16,17 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// DB health check
+app.get('/api/health', async (req, res) => {
+  const db = require('./db');
+  try {
+    const row = await db.prepare('SELECT NOW() as t').get();
+    res.json({ ok: true, time: row?.t, dbUrlSet: !!process.env.DATABASE_URL, dbUrlLen: (process.env.DATABASE_URL || '').length });
+  } catch (e) {
+    res.json({ ok: false, error: e.message, dbUrlSet: !!process.env.DATABASE_URL, dbUrlLen: (process.env.DATABASE_URL || '').length });
+  }
+});
+
 // Simple upload: accept base64 data URL
 app.post('/api/upload', require('./middleware/auth').verifyToken, (req, res) => {
   const { image } = req.body;
