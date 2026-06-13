@@ -6,21 +6,31 @@ import { showToast } from './toast.js';
 
 let cachedOrders = [];
 let cachedTransfers = [];
+let cachedOwners = [];
 
 async function fetchAdminData() {
   try {
     const token = localStorage.getItem('auth_token');
-    const ac = new AbortController();
-    const to = setTimeout(() => ac.abort(), 8000);
-    const res = await fetch('/api/orders', { signal: ac.signal, headers: { 'Authorization': `Bearer ${token}` } });
-    clearTimeout(to);
-    if (res.ok) cachedOrders = await res.json();
-    const ac2 = new AbortController();
-    const to2 = setTimeout(() => ac2.abort(), 8000);
-    const tres = await fetch('/api/orders/transfers', { signal: ac2.signal, headers: { 'Authorization': `Bearer ${token}` } });
-    clearTimeout(to2);
-    if (tres.ok) cachedTransfers = await tres.json();
+    const ac = new AbortController(), ac2 = new AbortController();
+    setTimeout(() => ac.abort(), 4000);
+    setTimeout(() => ac2.abort(), 4000);
+    const [orders, transfers] = await Promise.all([
+      fetch('/api/orders', { signal: ac.signal, headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch('/api/orders/transfers', { signal: ac2.signal, headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.ok ? r.json() : []).catch(() => [])
+    ]);
+    cachedOrders = orders;
+    cachedTransfers = transfers;
   } catch { cachedOrders = []; cachedTransfers = []; }
+}
+
+async function fetchOwners() {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const ac = new AbortController();
+    setTimeout(() => ac.abort(), 4000);
+    const res = await fetch('/api/auth/owners', { signal: ac.signal, headers: { 'Authorization': `Bearer ${token}` } });
+    if (res.ok) cachedOwners = await res.json();
+  } catch { cachedOwners = []; }
 }
 
 async function fetchOrdersForOwner(storeId) {
@@ -51,7 +61,8 @@ export async function initAdminDashboard() {
     return;
   }
   if (user.role === 'admin') {
-    await fetchAdminData();
+    container.innerHTML = '<div class="admin-loading" style="text-align:center;padding:60px;"><i class="fas fa-spinner fa-spin fa-3x" style="color:var(--primary);"></i><p style="margin-top:16px;color:var(--text-light);">جاري تحميل لوحة التحكم...</p></div>';
+    await Promise.all([fetchAdminData(), fetchOwners()]);
     try { await renderFullAdminDashboard(); } catch (e) {
       container.innerHTML = '<div class="cart-empty"><h2>حدث خطأ</h2><p>تعذر تحميل بيانات لوحة التحكم، حاول التحديث</p></div>';
     }
@@ -72,8 +83,7 @@ async function renderFullAdminDashboard() {
   const pendingOrders = cachedOrders.filter(o => o.status === 'pending').length;
   const deliveredOrders = cachedOrders.filter(o => o.status === 'delivered').length;
   const allStores = getStores();
-  let owners = [];
-  try { owners = await getStoreOwners(); } catch { owners = []; }
+  const owners = cachedOwners;
   container.innerHTML = `
     <div class="admin-tabs">
       <button class="admin-tab active" onclick="window.switchAdminTab('orders', this)"><i class="fas fa-shopping-bag"></i> الطلبات</button>
