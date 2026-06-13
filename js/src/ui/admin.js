@@ -10,13 +10,15 @@ let cachedTransfers = [];
 async function fetchAdminData() {
   try {
     const token = localStorage.getItem('auth_token');
-    const res = await fetch('/api/orders', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const ac = new AbortController();
+    const to = setTimeout(() => ac.abort(), 8000);
+    const res = await fetch('/api/orders', { signal: ac.signal, headers: { 'Authorization': `Bearer ${token}` } });
+    clearTimeout(to);
     if (res.ok) cachedOrders = await res.json();
-    const tres = await fetch('/api/orders/transfers', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const ac2 = new AbortController();
+    const to2 = setTimeout(() => ac2.abort(), 8000);
+    const tres = await fetch('/api/orders/transfers', { signal: ac2.signal, headers: { 'Authorization': `Bearer ${token}` } });
+    clearTimeout(to2);
     if (tres.ok) cachedTransfers = await tres.json();
   } catch { cachedOrders = []; cachedTransfers = []; }
 }
@@ -50,7 +52,9 @@ export async function initAdminDashboard() {
   }
   if (user.role === 'admin') {
     await fetchAdminData();
-    await renderFullAdminDashboard();
+    try { await renderFullAdminDashboard(); } catch (e) {
+      container.innerHTML = '<div class="cart-empty"><h2>حدث خطأ</h2><p>تعذر تحميل بيانات لوحة التحكم، حاول التحديث</p></div>';
+    }
   } else if (user.role === 'store_owner') {
     await fetchOrdersForOwner(user.storeId);
     renderStoreOwnerDashboard(user.storeId);
@@ -68,7 +72,8 @@ async function renderFullAdminDashboard() {
   const pendingOrders = cachedOrders.filter(o => o.status === 'pending').length;
   const deliveredOrders = cachedOrders.filter(o => o.status === 'delivered').length;
   const allStores = getStores();
-  const owners = await getStoreOwners();
+  let owners = [];
+  try { owners = await getStoreOwners(); } catch { owners = []; }
   container.innerHTML = `
     <div class="admin-tabs">
       <button class="admin-tab active" onclick="window.switchAdminTab('orders', this)"><i class="fas fa-shopping-bag"></i> الطلبات</button>
