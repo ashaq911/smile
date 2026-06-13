@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إتمام الطلب - سمايل</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark');})();function toggleDarkMode(){const h=document.documentElement;const is=h.getAttribute('data-theme')==='dark';if(is){h.removeAttribute('data-theme');localStorage.setItem('theme','light')}else{h.setAttribute('data-theme','dark');localStorage.setItem('theme','dark')};const i=document.getElementById('darkToggle');if(i)i.innerHTML=is?'<i class=\"fas fa-moon\"></i>':'<i class=\"fas fa-sun\"></i>';}</script>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <a href="../index.html" class="logo">سمايل</a>
+    <nav class="nav">
+      <a href="../index.html">الرئيسية</a>
+      <a href="stores.html">المتاجر</a>
+      <a href="cart.html" id="cartNavLink">السلة <span class="cart-badge" id="cartBadge">0</span></a>
+      <a href="orders.html" id="ordersNavLink">طلباتي</a>
+      <a href="admin.html">لوحة التحكم</a>
+    </nav>
+    <div class="auth-section" id="authSection"></div>
+    <button class="dark-toggle" onclick="toggleDarkMode()" title="الوضع الليلي" id="darkToggle"><i class="fas fa-moon"></i></button>
+  </div>
+</header>
+
+<div class="login-gate" id="loginGate">
+  <div class="login-gate-content">
+    <div class="login-gate-icon"><i class="fas fa-credit-card"></i></div>
+    <h2>مرحباً بك في <strong>سمايل</strong></h2>
+    <p>سجل الدخول أو أنشئ حساباً جديداً لتتمكن من إتمام الطلب</p>
+    <div class="login-gate-buttons">
+      <button class="btn btn-primary" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
+      <button class="btn btn-outline" onclick="showRegisterModal()"><i class="fas fa-user-plus"></i> إنشاء حساب جديد</button>
+    </div>
+  </div>
+</div>
+
+<div class="site-content" id="siteContent" style="display:none;">
+
+<section class="page-header">
+  <div class="container">
+    <h1>إتمام الطلب</h1>
+    <p>أدخل معلومات الشحن والدفع</p>
+  </div>
+</section>
+
+<section class="checkout-page">
+  <div class="container">
+    <div class="checkout-grid">
+      <form class="checkout-form" id="checkoutForm" onsubmit="submitOrder(event)">
+        <h2>معلومات الشحن</h2>
+        <div id="savedAddressesContainer" style="margin-bottom:16px;display:none;">
+          <label>العناوين المحفوظة</label>
+          <select id="savedAddressSelect" onchange="fillAddress(event)" style="margin-bottom:8px;">
+            <option value="">-- اختر عنواناً محفوظاً --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>الاسم الكامل *</label>
+          <input type="text" id="custName" placeholder="أدخل اسمك كاملاً" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>رقم الجوال *</label>
+            <input type="tel" id="custPhone" placeholder="05xxxxxxxx" required>
+          </div>
+          <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="custEmail" placeholder="example@email.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>العنوان *</label>
+          <textarea id="custAddress" placeholder="الشارع، الحي، رقم المبنى" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>المدينة</label>
+          <select id="custCity">
+            <option value="بغداد">بغداد</option>
+            <option value="البصرة">البصرة</option>
+            <option value="الموصل">الموصل</option>
+            <option value="أربيل">أربيل</option>
+            <option value="السليمانية">السليمانية</option>
+            <option value="كركوك">كركوك</option>
+            <option value="النجف">النجف</option>
+            <option value="كربلاء">كربلاء</option>
+            <option value="الناصرية">الناصرية</option>
+            <option value="العمارة">العمارة</option>
+            <option value="الديوانية">الديوانية</option>
+            <option value="الحلة">الحلة</option>
+            <option value="الكوت">الكوت</option>
+            <option value="دهوك">دهوك</option>
+            <option value="الرمادي">الرمادي</option>
+            <option value="تكريت">تكريت</option>
+            <option value="سامراء">سامراء</option>
+            <option value="الفلوجة">الفلوجة</option>
+            <option value="أخرى">أخرى</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="saveAddressCheck" checked style="width:auto;">
+          <label for="saveAddressCheck" style="margin:0;">حفظ العنوان لعملية الشراء القادمة</label>
+        </div>
+        <h2 style="margin-top:24px;">طريقة الدفع</h2>
+        <div class="form-group">
+          <select id="paymentMethod">
+            <option value="cod">الدفع عند الاستلام</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:16px;">
+          <i class="fas fa-check"></i> تأكيد الطلب
+        </button>
+      </form>
+      <div class="checkout-summary" id="checkoutSummary">
+        <h3>ملخص الطلب</h3>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /siteContent -->
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h3>سمايل</h3>
+        <p>أفضل منصة للتسوق الإلكتروني بأفضل الأسعار.</p>
+      </div>
+      <div class="footer-col">
+        <h3>روابط سريعة</h3>
+        <a href="../index.html">الرئيسية</a>
+        <a href="cart.html">السلة</a>
+        <a href="orders.html">طلباتي</a>
+      </div>
+      <div class="footer-col">
+        <h3>تواصل معنا</h3>
+        <p><i class="fas fa-phone"></i> +964 770 123 4567</p>
+        <p><i class="fas fa-envelope"></i> info@smayel.iq</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 سمايل. جميع الحقوق محفوظة.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal" onclick="if(event.target===this)closeLoginModal()">
+  <div class="modal login-modal">
+    <div class="modal-header">
+      <div style="text-align:center;width:100%;">
+        <div class="login-icon"><i class="fas fa-user-circle"></i></div>
+        <h3>تسجيل الدخول</h3>
+      </div>
+      <button class="modal-close" onclick="closeLoginModal()">&times;</button>
+    </div>
+    <form onsubmit="event.preventDefault();processLogin()">
+      <div class="form-group">
+        <label><i class="fas fa-user"></i> اسم المستخدم</label>
+        <input type="text" id="loginUsername" placeholder="اسم المستخدم" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> كلمة المرور</label>
+        <input type="password" id="loginPassword" placeholder="كلمة المرور" autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;"><i class="fas fa-sign-in-alt"></i> دخول</button>
+    </form>
+    <div style="text-align:center;margin-top:16px;font-size:14px;color:var(--text-light);">
+      ليس لديك حساب؟ <a href="#" onclick="closeLoginModal();showRegisterModal();return false;" style="color:var(--primary);font-weight:700;">إنشاء حساب</a>
+    </div>
+  </div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal-overlay" id="registerModal" onclick="if(event.target===this)closeRegisterModal()">
+  <div class="modal login-modal">
+    <div class="modal-header">
+      <div style="text-align:center;width:100%;">
+        <div class="login-icon"><i class="fas fa-user-plus"></i></div>
+        <h3>إنشاء حساب جديد</h3>
+      </div>
+      <button class="modal-close" onclick="closeRegisterModal()">&times;</button>
+    </div>
+    <form onsubmit="event.preventDefault();processRegister()">
+      <div class="form-group">
+        <label><i class="fas fa-user-tag"></i> الاسم الكامل</label>
+        <input type="text" id="regName" placeholder="اسمك الكامل" required>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-user"></i> اسم المستخدم</label>
+        <input type="text" id="regUsername" placeholder="اسم المستخدم للدخول" required>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> كلمة المرور</label>
+        <input type="password" id="regPassword" placeholder="كلمة المرور" required>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-check-circle"></i> تأكيد كلمة المرور</label>
+        <input type="password" id="regConfirm" placeholder="أعد كتابة كلمة المرور" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
+    </form>
+    <div style="text-align:center;margin-top:16px;font-size:14px;color:var(--text-light);">
+      لديك حساب بالفعل؟ <a href="#" onclick="closeRegisterModal();showLoginModal();return false;" style="color:var(--primary);font-weight:700;">تسجيل الدخول</a>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="../js/src/app.js"></script>
+</body>
+</html>

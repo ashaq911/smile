@@ -1,0 +1,35 @@
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'smayel-secret-key-change-in-production';
+
+function generateToken(user) {
+  return jwt.sign(
+    { id: user.id, username: user.username, role: user.role, storeId: user.storeId, name: user.name },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+}
+
+function verifyToken(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'لا يوجد رمز دخول' });
+  }
+  try {
+    const token = header.split(' ')[1];
+    req.user = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch {
+    return res.status(401).json({ error: 'رمز الدخول غير صالح' });
+  }
+}
+
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.user) return res.status(401).json({ error: 'غير مصرح' });
+    if (!roles.includes(req.user.role)) return res.status(403).json({ error: 'ليس لديك صلاحية' });
+    next();
+  };
+}
+
+module.exports = { generateToken, verifyToken, requireRole, JWT_SECRET };
