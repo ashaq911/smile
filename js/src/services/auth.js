@@ -6,12 +6,17 @@ export async function initAuth() {
   const stored = getStoredUser();
   if (stored) {
     try {
-      const user = await apiGet('/auth/me');
-      authUsers = [user];
-      return user;
+      const user = await apiGet('/auth/me').catch(() => null);
+      if (user) {
+        authUsers = [user];
+        return user;
+      }
+      // keep stored user even if /auth/me fails (transient DB issue)
+      authUsers = [stored];
+      return stored;
     } catch {
-      setToken(null);
-      setStoredUser(null);
+      authUsers = [stored];
+      return stored;
     }
   }
   return null;
