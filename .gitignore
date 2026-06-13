@@ -1,6 +1,11 @@
 node_modules/
 backend/node_modules/
 *.db
+*.db-shm
+*.db-wal
 backend/uploads/*
 !backend/uploads/.gitkeep
+backend/server.log
+backend/server.err
+backend/body.json
 .env

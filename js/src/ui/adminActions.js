@@ -252,18 +252,25 @@ export async function saveProduct() {
   const fileInput = document.getElementById('productImage');
   if (fileInput && fileInput.files && fileInput.files[0]) {
     try {
-      const formData = new FormData();
-      formData.append('image', fileInput.files[0]);
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-        body: formData
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      image = await new Promise((resolve) => {
+        reader.onload = async (e) => {
+          const base64 = e.target.result;
+          const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+            body: JSON.stringify({ image: base64 })
+          });
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            resolve(uploadData.url);
+          } else { resolve(''); }
+        };
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
       });
-      if (uploadRes.ok) {
-        const uploadData = await uploadRes.json();
-        image = uploadData.url;
-      }
-    } catch {}
+    } catch { image = ''; }
   }
   const data = { title, description, price, icon, image, inStock, storeId, subcategoryId, shippingFee };
   try {
