@@ -3,7 +3,11 @@ import { apiGet, apiPost, apiPut, apiDelete } from './api.js';
 let products = [];
 
 export async function initProducts() {
-  products = await apiGet('/products');
+  const cached = sessionStorage.getItem('cache_products');
+  if (cached) { try { products = JSON.parse(cached); } catch {} }
+  if (products.length === 0) products = await apiGet('/products').catch(() => products || []);
+  else apiGet('/products').then(d => { products = d; sessionStorage.setItem('cache_products', JSON.stringify(d)); }).catch(() => {});
+  sessionStorage.setItem('cache_products', JSON.stringify(products));
 }
 
 async function reload() {
