@@ -25,7 +25,7 @@ async function request(method, path, body) {
   if (token) options.headers['Authorization'] = `Bearer ${token}`;
   if (body !== undefined) options.body = JSON.stringify(body);
   const ac = new AbortController();
-  const to = setTimeout(() => ac.abort(), 10000);
+  const to = setTimeout(() => ac.abort(), 6000);
   options.signal = ac.signal;
   const res = await fetch(`${API_BASE}${path}`, options);
   clearTimeout(to);

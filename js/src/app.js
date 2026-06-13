@@ -60,19 +60,20 @@ function renderUI() {
 }
 
 async function initApp() {
-  document.addEventListener('DOMContentLoaded', () => renderUI());
+  const ready = document.readyState !== 'loading';
+  if (ready) renderUI();
+  else document.addEventListener('DOMContentLoaded', () => renderUI());
 
   try {
     await initAuth();
-    await initStores();
-    await initCategories();
-    await initProducts();
-    await initCart();
+    await Promise.all([initStores(), initCategories(), initProducts()]);
   } catch (e) {
     console.error('Init error:', e);
   }
 
-  await renderUI();
+  if (document.readyState !== 'loading') renderUI();
+  else document.addEventListener('DOMContentLoaded', () => renderUI());
+  initCart().then(() => { try { updateCartBadge(); } catch {} }).catch(() => {});
 }
 
 initApp();

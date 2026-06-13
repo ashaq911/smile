@@ -6,19 +6,19 @@ let subcategories = [];
 export async function initCategories() {
   const c = sessionStorage.getItem('cache_categories');
   const s = sessionStorage.getItem('cache_subcategories');
-  if (c) { try { categories = JSON.parse(c); } catch {} }
-  if (s) { try { subcategories = JSON.parse(s); } catch {} }
+  if (c) try { categories = JSON.parse(c); } catch {}
+  if (s) try { subcategories = JSON.parse(s); } catch {}
   if (categories.length === 0 && subcategories.length === 0) {
     const data = await Promise.all([apiGet('/categories').catch(() => []), apiGet('/categories/subcategories').catch(() => [])]);
     categories = data[0]; subcategories = data[1];
+    if (categories.length) sessionStorage.setItem('cache_categories', JSON.stringify(categories));
+    if (subcategories.length) sessionStorage.setItem('cache_subcategories', JSON.stringify(subcategories));
   } else {
     Promise.all([
-      apiGet('/categories').then(d => { categories = d; sessionStorage.setItem('cache_categories', JSON.stringify(d)); }).catch(() => {}),
-      apiGet('/categories/subcategories').then(d => { subcategories = d; sessionStorage.setItem('cache_subcategories', JSON.stringify(d)); }).catch(() => {})
+      apiGet('/categories').then(d => { if (d.length) { categories = d; sessionStorage.setItem('cache_categories', JSON.stringify(d)); } }).catch(() => {}),
+      apiGet('/categories/subcategories').then(d => { if (d.length) { subcategories = d; sessionStorage.setItem('cache_subcategories', JSON.stringify(d)); } }).catch(() => {})
     ]);
   }
-  sessionStorage.setItem('cache_categories', JSON.stringify(categories));
-  sessionStorage.setItem('cache_subcategories', JSON.stringify(subcategories));
 }
 
 async function reloadCats() {

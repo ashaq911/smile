@@ -4,10 +4,13 @@ let stores = [];
 
 export async function initStores() {
   const cached = sessionStorage.getItem('cache_stores');
-  if (cached) { try { stores = JSON.parse(cached); } catch {} }
-  if (stores.length === 0) stores = await apiGet('/stores').catch(() => stores || []);
-  else apiGet('/stores').then(d => { stores = d; sessionStorage.setItem('cache_stores', JSON.stringify(d)); }).catch(() => {});
-  sessionStorage.setItem('cache_stores', JSON.stringify(stores));
+  if (cached) try { stores = JSON.parse(cached); } catch {}
+  if (stores.length === 0) {
+    stores = await apiGet('/stores').catch(() => []);
+    if (stores.length) sessionStorage.setItem('cache_stores', JSON.stringify(stores));
+  } else {
+    apiGet('/stores').then(d => { if (d.length) { stores = d; sessionStorage.setItem('cache_stores', JSON.stringify(d)); } }).catch(() => {});
+  }
 }
 
 export async function reloadStores() {

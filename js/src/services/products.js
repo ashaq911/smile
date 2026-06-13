@@ -4,10 +4,13 @@ let products = [];
 
 export async function initProducts() {
   const cached = sessionStorage.getItem('cache_products');
-  if (cached) { try { products = JSON.parse(cached); } catch {} }
-  if (products.length === 0) products = await apiGet('/products').catch(() => products || []);
-  else apiGet('/products').then(d => { products = d; sessionStorage.setItem('cache_products', JSON.stringify(d)); }).catch(() => {});
-  sessionStorage.setItem('cache_products', JSON.stringify(products));
+  if (cached) try { products = JSON.parse(cached); } catch {}
+  if (products.length === 0) {
+    products = await apiGet('/products').catch(() => []);
+    if (products.length) sessionStorage.setItem('cache_products', JSON.stringify(products));
+  } else {
+    apiGet('/products').then(d => { if (d.length) { products = d; sessionStorage.setItem('cache_products', JSON.stringify(d)); } }).catch(() => {});
+  }
 }
 
 async function reload() {

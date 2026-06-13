@@ -34,7 +34,7 @@ export function logout() {
   setToken(null);
   setStoredUser(null);
   authUsers = [];
-  ['cache_stores','cache_categories','cache_subcategories','cache_products'].forEach(k => sessionStorage.removeItem(k));
+  sessionStorage.clear();
   window.location.reload();
 }
 

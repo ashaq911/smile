@@ -4,11 +4,17 @@ import { getProductById } from './products.js';
 let cartItems = [];
 
 export async function initCart() {
-  try {
-    cartItems = await apiGet('/cart');
-  } catch {
-    cartItems = [];
+  const user = JSON.parse(localStorage.getItem('auth_user') || 'null');
+  if (!user) { cartItems = []; return; }
+  const key = 'cache_cart_' + user.id;
+  const cached = sessionStorage.getItem(key);
+  if (cached) try { cartItems = JSON.parse(cached); } catch {}
+  if (cartItems.length === 0) {
+    cartItems = await apiGet('/cart').catch(() => []);
+  } else {
+    apiGet('/cart').then(d => { if (d) { cartItems = d; sessionStorage.setItem(key, JSON.stringify(d)); } }).catch(() => {});
   }
+  if (cartItems.length) sessionStorage.setItem(key, JSON.stringify(cartItems));
 }
 
 function getProductDetails() {
