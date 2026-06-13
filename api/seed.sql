@@ -2,9 +2,9 @@
 -- Run this AFTER creating tables (schema.sql)
 
 INSERT INTO users (username, password, role, name) VALUES
-('isaac', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin', 'Isaac Admin'),
-('owner1', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'store_owner', 'مالك المتجر الأول'),
-('customer1', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'customer', 'زبون تجريبي')
+('isaac', '$2a$10$5cb6IwushxCmQEkRi8ld6.iM1nluR0IJ41R0LQXokq1/giXeVMfM.', 'admin', 'Isaac Admin'),
+('owner1', '$2a$10$5cb6IwushxCmQEkRi8ld6.iM1nluR0IJ41R0LQXokq1/giXeVMfM.', 'store_owner', 'مالك المتجر الأول'),
+('customer1', '$2a$10$5cb6IwushxCmQEkRi8ld6.iM1nluR0IJ41R0LQXokq1/giXeVMfM.', 'customer', 'زبون تجريبي')
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO stores (name, description, icon, owner, phone) VALUES
