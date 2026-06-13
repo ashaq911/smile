@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'smayel-secret-key-change-in-production';
 
 function generateToken(user) {
-  return jwt.sign({ id: user.id, username: user.username, role: user.role, storeId: user.storeId }, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ id: user.id, username: user.username, role: user.role, storeId: user.storeId, name: user.name || '' }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 function verifyToken(req, res, next) {

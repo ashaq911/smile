@@ -29,10 +29,8 @@ router.post('/register', async (req, res) => {
   res.json({ token, user: { id: user.id, username: user.username, role: user.role, storeId: user.storeId, name: user.name } });
 });
 
-router.get('/me', verifyToken, async (req, res) => {
-  const user = await db.prepare('SELECT id, username, role, name, storeId FROM users WHERE id = ?').get(req.user.id);
-  if (!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
-  res.json(user);
+router.get('/me', verifyToken, (req, res) => {
+  res.json(req.user);
 });
 
 router.get('/owners', verifyToken, requireRole('admin'), async (req, res) => {
