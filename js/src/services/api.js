@@ -24,7 +24,11 @@ async function request(method, path, body) {
   const token = getToken();
   if (token) options.headers['Authorization'] = `Bearer ${token}`;
   if (body !== undefined) options.body = JSON.stringify(body);
+  const ac = new AbortController();
+  const to = setTimeout(() => ac.abort(), 10000);
+  options.signal = ac.signal;
   const res = await fetch(`${API_BASE}${path}`, options);
+  clearTimeout(to);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'خطأ في الاتصال' }));
     throw new Error(err.error || `HTTP ${res.status}`);
