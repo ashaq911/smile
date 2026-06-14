@@ -1,6 +1,6 @@
 import { addStore, updateStore, deleteStore, getStoreById, getStores } from '../services/stores.js';
 import { addCategory, updateCategory, deleteCategory, getCategoryById, getCategoriesByStore, addSubcategory, updateSubcategory, deleteSubcategory, getSubcategoryById, getSubcategoriesByCategory } from '../services/categories.js';
-import { addProduct, updateProduct, deleteProduct, getProducts, getProductsByStore, getStoreProductCount, getSubcategoryProductCount, initProducts } from '../services/products.js';
+import { addProduct, deleteProduct, getProducts, getProductsByStore, getStoreProductCount, getSubcategoryProductCount } from '../services/products.js';
 import { addStoreOwner, deleteAuthUser, getCurrentUser, getAllAuthUsers, getAuthUserById } from '../services/auth.js';
 import { showToast } from './toast.js';
 import { initAdminDashboard } from './admin.js';
@@ -278,16 +278,16 @@ export async function saveProduct() {
   }
   const data = { title, description, price, icon, image, inStock, storeId, subcategoryId, shippingFee };
   try {
-    if (id) {
-      await updateProduct(parseInt(id), data);
-      showToast('تم تحديث المنتج بنجاح');
-    } else {
-      await addProduct(data);
-      showToast('تم إضافة المنتج بنجاح');
-    }
+    const res = await fetch(`/api/products${id ? '/' + id : ''}`, {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({ error: 'خطأ' })); throw new Error(e.error); }
+    showToast(id ? 'تم تحديث المنتج بنجاح' : 'تم إضافة المنتج بنجاح');
   } catch (e) { showToast(e.message || 'فشل حفظ المنتج'); }
   document.getElementById('productModal').style.display = 'none';
-  initAdminDashboard();
+  try { (await import('../services/products.js')).initProducts().then(function() { initAdminDashboard(); }); } catch(e) { initAdminDashboard(); }
 }
 window.saveProduct = saveProduct;
 
