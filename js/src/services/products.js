@@ -3,13 +3,13 @@ import { apiGet, apiPost, apiPut, apiDelete } from './api.js';
 let products = [];
 
 export async function initProducts() {
-  const cached = sessionStorage.getItem('cache_products');
+  const cached = localStorage.getItem('cache_products');
   if (cached) try { products = JSON.parse(cached); } catch {}
   if (products.length === 0) {
     products = await apiGet('/products').catch(() => []);
-    if (products.length) sessionStorage.setItem('cache_products', JSON.stringify(products));
+    if (products.length) localStorage.setItem('cache_products', JSON.stringify(products));
   } else {
-    apiGet('/products').then(d => { if (d.length) { products = d; sessionStorage.setItem('cache_products', JSON.stringify(d)); } }).catch(() => {});
+    apiGet('/products').then(d => { if (d.length) { products = d; localStorage.setItem('cache_products', JSON.stringify(d)); } }).catch(() => {});
   }
 }
 

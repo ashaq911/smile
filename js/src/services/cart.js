@@ -7,14 +7,14 @@ export async function initCart() {
   const user = JSON.parse(localStorage.getItem('auth_user') || 'null');
   if (!user) { cartItems = []; return; }
   const key = 'cache_cart_' + user.id;
-  const cached = sessionStorage.getItem(key);
+  const cached = localStorage.getItem(key);
   if (cached) try { cartItems = JSON.parse(cached); } catch {}
   if (cartItems.length === 0) {
     cartItems = await apiGet('/cart').catch(() => []);
   } else {
-    apiGet('/cart').then(d => { if (d) { cartItems = d; sessionStorage.setItem(key, JSON.stringify(d)); } }).catch(() => {});
+    apiGet('/cart').then(d => { if (d) { cartItems = d; localStorage.setItem(key, JSON.stringify(d)); } }).catch(() => {});
   }
-  if (cartItems.length) sessionStorage.setItem(key, JSON.stringify(cartItems));
+  if (cartItems.length) localStorage.setItem(key, JSON.stringify(cartItems));
 }
 
 function getProductDetails() {
