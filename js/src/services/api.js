@@ -19,13 +19,13 @@ export function setStoredUser(user) {
   else localStorage.removeItem('auth_user');
 }
 
-async function request(method, path, body) {
+async function request(method, path, body, timeout) {
   const options = { method, headers: { 'Content-Type': 'application/json' } };
   const token = getToken();
   if (token) options.headers['Authorization'] = `Bearer ${token}`;
   if (body !== undefined) options.body = JSON.stringify(body);
   const ac = new AbortController();
-  const to = setTimeout(() => ac.abort(), 6000);
+  const to = setTimeout(() => ac.abort(), timeout || 8000);
   options.signal = ac.signal;
   const res = await fetch(`${API_BASE}${path}`, options);
   clearTimeout(to);
@@ -36,7 +36,7 @@ async function request(method, path, body) {
   return res.json();
 }
 
-export function apiGet(path) { return request('GET', path); }
-export function apiPost(path, body) { return request('POST', path, body); }
-export function apiPut(path, body) { return request('PUT', path, body); }
-export function apiDelete(path) { return request('DELETE', path); }
+export function apiGet(path) { return request('GET', path, undefined, 6000); }
+export function apiPost(path, body) { return request('POST', path, body, 15000); }
+export function apiPut(path, body) { return request('PUT', path, body, 15000); }
+export function apiDelete(path) { return request('DELETE', path, undefined, 15000); }

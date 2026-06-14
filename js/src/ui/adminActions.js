@@ -45,6 +45,8 @@ export async function saveStore() {
     paymentInfo: paymentInfo
   };
   if (!data.name) { showToast('يرجى إدخال اسم المتجر'); return; }
+  const btn = document.querySelector('#storeForm button[type="submit"]');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'; }
   try {
     if (id) { await updateStore(parseInt(id), data); showToast('تم تحديث المتجر بنجاح'); }
     else {
@@ -58,9 +60,10 @@ export async function saveStore() {
         showToast('تم إضافة المتجر وحساب صاحبه بنجاح');
       } else { showToast('تم إضافة المتجر بنجاح'); }
     }
-  } catch (e) { showToast(e.message); }
-  document.getElementById('storeModal').style.display = 'none';
-  initAdminDashboard();
+    document.getElementById('storeModal').style.display = 'none';
+    initAdminDashboard();
+  } catch (e) { showToast(e.message || 'فشل الحفظ، حاول مرة أخرى'); }
+  if (btn) { btn.disabled = false; btn.innerHTML = 'حفظ'; }
 }
 window.saveStore = saveStore;
 
@@ -437,12 +440,15 @@ export async function saveOwner() {
   const name = document.getElementById('ownerName').value.trim();
   const storeId = parseInt(document.getElementById('ownerStore').value);
   if (!username || !password || !name || !storeId) { showToast('يرجى تعبئة جميع الحقول'); return; }
+  const btn = document.querySelector('#ownerForm button[type="submit"]');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'; }
   try {
     await addStoreOwner(username, password, name, storeId);
     showToast('تم إضافة صاحب المتجر بنجاح');
-  } catch (e) { showToast(e.message); }
-  document.getElementById('ownerModal').style.display = 'none';
-  initAdminDashboard();
+    document.getElementById('ownerModal').style.display = 'none';
+    initAdminDashboard();
+  } catch (e) { showToast(e.message || 'فشل الحفظ، حاول مرة أخرى'); }
+  if (btn) { btn.disabled = false; btn.innerHTML = 'حفظ'; }
 }
 window.saveOwner = saveOwner;
 
