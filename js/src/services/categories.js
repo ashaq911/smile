@@ -3,6 +3,8 @@ import { apiGet, apiPost, apiPut, apiDelete } from './api.js';
 let categories = [];
 let subcategories = [];
 
+function dataChanged() { window.dispatchEvent(new CustomEvent('dataUpdated')); }
+
 export async function initCategories() {
   const c = localStorage.getItem('cache_categories');
   const s = localStorage.getItem('cache_subcategories');
@@ -15,8 +17,8 @@ export async function initCategories() {
     if (subcategories.length) localStorage.setItem('cache_subcategories', JSON.stringify(subcategories));
   } else {
     Promise.all([
-      apiGet('/categories').then(d => { if (d.length) { categories = d; localStorage.setItem('cache_categories', JSON.stringify(d)); } }).catch(() => {}),
-      apiGet('/categories/subcategories').then(d => { if (d.length) { subcategories = d; localStorage.setItem('cache_subcategories', JSON.stringify(d)); } }).catch(() => {})
+      apiGet('/categories').then(d => { if (d.length) { categories = d; localStorage.setItem('cache_categories', JSON.stringify(d)); dataChanged(); } }).catch(() => {}),
+      apiGet('/categories/subcategories').then(d => { if (d.length) { subcategories = d; localStorage.setItem('cache_subcategories', JSON.stringify(d)); dataChanged(); } }).catch(() => {})
     ]);
   }
 }

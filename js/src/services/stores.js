@@ -2,6 +2,8 @@ import { apiGet, apiPost, apiPut, apiDelete } from './api.js';
 
 let stores = [];
 
+function dataChanged() { window.dispatchEvent(new CustomEvent('dataUpdated')); }
+
 export async function initStores() {
   const cached = localStorage.getItem('cache_stores');
   if (cached) try { stores = JSON.parse(cached); } catch {}
@@ -9,7 +11,7 @@ export async function initStores() {
     stores = await apiGet('/stores').catch(() => []);
     if (stores.length) localStorage.setItem('cache_stores', JSON.stringify(stores));
   } else {
-    apiGet('/stores').then(d => { if (d.length) { stores = d; localStorage.setItem('cache_stores', JSON.stringify(d)); } }).catch(() => {});
+    apiGet('/stores').then(d => { if (d.length) { stores = d; localStorage.setItem('cache_stores', JSON.stringify(d)); dataChanged(); } }).catch(() => {});
   }
 }
 

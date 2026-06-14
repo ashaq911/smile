@@ -64,10 +64,19 @@ async function renderDataPages(params) {
   else document.getElementById('page-product').style.display = 'none';
 }
 
+// Listen for data updates to refresh views when background fetches complete
+window.addEventListener('dataUpdated', () => {
+  try { updateAuthUI(); initBrowse(); renderAllStores(); renderStoreDetail(); renderProductDetail(); } catch (e) {}
+});
+
 async function initApp() {
   initAuth();
-  Promise.all([initStores(), initCategories(), initProducts()]).catch(() => {});
-
+  const cached = localStorage.getItem('cache_stores') && localStorage.getItem('cache_products');
+  if (cached) {
+    await Promise.all([initStores(), initCategories(), initProducts()]);
+  } else {
+    await Promise.all([initStores(), initCategories(), initProducts()]);
+  }
   renderUI();
   initCart().then(() => { try { updateCartBadge(); } catch {} }).catch(() => {});
 

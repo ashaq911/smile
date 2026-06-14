@@ -83,8 +83,14 @@ export async function initAdminDashboard() {
       try { await renderFullAdminDashboard(); } catch (e) { container.innerHTML = '<div class="cart-empty"><h2>حدث خطأ</h2><p>تعذر تحميل بيانات لوحة التحكم، حاول التحديث</p></div>'; }
     }
   } else if (user.role === 'store_owner') {
-    await fetchOrdersForOwner(user.storeId);
-    renderStoreOwnerDashboard(user.storeId);
+    const key = 'cache_store_orders_' + user.id;
+    const raw = localStorage.getItem(key);
+    if (raw) { try { cachedOrders = JSON.parse(raw); renderStoreOwnerDashboard(user.storeId); } catch {} }
+    fetchOrdersForOwner(user.storeId).then(() => {
+      localStorage.setItem(key, JSON.stringify(cachedOrders));
+      try { renderStoreOwnerDashboard(user.storeId); } catch {}
+    }).catch(() => {});
+    if (!raw) { container.innerHTML = '<div class="admin-loading" style="text-align:center;padding:60px;"><i class="fas fa-spinner fa-spin fa-3x" style="color:var(--primary);"></i><p style="margin-top:16px;color:var(--text-light);">جاري تحميل لوحة التحكم...</p></div>'; }
   } else {
     container.innerHTML = '<div class="cart-empty"><h2>ليس لديك صلاحية</h2><p>عذراً، لا تملك صلاحية الوصول إلى هذه الصفحة</p></div>';
   }

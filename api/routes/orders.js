@@ -11,8 +11,19 @@ router.get('/', verifyToken, async (req, res) => {
   } else {
     orders = await db.prepare('SELECT * FROM orders WHERE userId = ? ORDER BY "createdAt" DESC').all(req.user.id);
   }
-  for (const order of orders) {
-    order.items = await db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(order.id);
+  if (orders.length) {
+    const ids = orders.map(o => o.id);
+    const ph = ids.map((_, i) => `$${i + 1}`);
+    const items = await db.prepare(`SELECT * FROM order_items WHERE orderId IN (${ph.join(',')})`).all(...ids);
+    const itemMap = {};
+    for (const item of items) {
+      const oid = item.orderid || item.orderId || item["orderId"];
+      if (!itemMap[oid]) itemMap[oid] = [];
+      itemMap[oid].push(item);
+    }
+    for (const order of orders) {
+      order.items = itemMap[order.id] || [];
+    }
   }
   res.json(orders);
 });

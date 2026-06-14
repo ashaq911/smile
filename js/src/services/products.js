@@ -2,6 +2,8 @@ import { apiGet, apiPost, apiPut, apiDelete } from './api.js';
 
 let products = [];
 
+function dataChanged() { window.dispatchEvent(new CustomEvent('dataUpdated')); }
+
 export async function initProducts() {
   const cached = localStorage.getItem('cache_products');
   if (cached) try { products = JSON.parse(cached); } catch {}
@@ -9,7 +11,7 @@ export async function initProducts() {
     products = await apiGet('/products').catch(() => []);
     if (products.length) localStorage.setItem('cache_products', JSON.stringify(products));
   } else {
-    apiGet('/products').then(d => { if (d.length) { products = d; localStorage.setItem('cache_products', JSON.stringify(d)); } }).catch(() => {});
+    apiGet('/products').then(d => { if (d.length) { products = d; localStorage.setItem('cache_products', JSON.stringify(d)); dataChanged(); } }).catch(() => {});
   }
 }
 
