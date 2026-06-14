@@ -16,6 +16,7 @@ import { addToCart, cartUpdateQuantity, cartRemove, cartClear } from './ui/cart.
 import { initRouter, navigate, registerPage } from './router.js';
 
 window.navigateHome = function() {
+  if (window.resetBrowseState) window.resetBrowseState();
   document.querySelectorAll('.page-section').forEach(function(p) { p.style.display = 'none'; });
   var home = document.getElementById('page-home');
   if (home) home.style.display = 'block';
@@ -78,7 +79,13 @@ async function renderDataPages(params) {
 
 // Listen for data updates to refresh views when background fetches complete
 window.addEventListener('dataUpdated', () => {
-  try { updateAuthUI(); initBrowse(); renderAllStores(); renderStoreDetail(); renderProductDetail(); } catch (e) {}
+  try {
+    updateAuthUI();
+    initBrowse();
+    renderAllStores();
+    renderStoreDetail();
+    renderProductDetail();
+  } catch (e) {}
 });
 
 async function initApp() {

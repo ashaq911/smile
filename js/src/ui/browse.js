@@ -14,8 +14,10 @@ export async function initBrowse() {
   await initProducts();
   document.getElementById('productGrid')?.classList.add('loading');
   renderBrowseStores();
-  renderBrowseProducts(getVisibleProducts());
+  var useFiltered = browseState.storeId || browseState.categoryId || browseState.subcategoryId;
+  renderBrowseProducts(useFiltered ? getFilteredProducts() : getVisibleProducts());
   renderRecentlyViewed();
+  if (!useFiltered) { updateBreadcrumb(); updateBrowseVisibility(); }
 }
 
 export function applySort() {
@@ -84,9 +86,15 @@ export function selectStore(storeId, btn) {
 }
 window.selectStore = selectStore;
 
-export function resetBrowse() {
+export function resetBrowseState() {
   browseState = { storeId: null, categoryId: null, subcategoryId: null };
   currentPage = 1;
+  priceRange = { min: 0, max: Infinity };
+}
+window.resetBrowseState = resetBrowseState;
+
+export function resetBrowse() {
+  resetBrowseState();
   document.querySelectorAll('.browse-btn').forEach(b => b.classList.remove('active'));
   const first = document.querySelector('.browse-btn');
   if (first) first.classList.add('active');
