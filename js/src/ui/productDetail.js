@@ -10,8 +10,8 @@ export async function renderProductDetail() {
   const loader = document.getElementById('productLoader');
   if (!container) return;
 
-  const params = new URLSearchParams(window.location.search);
-  const productId = parseInt(params.get('id'));
+  const p = window._spaParams || new URLSearchParams(window.location.search);
+  const productId = parseInt(p.get('id'));
   if (!productId) { container.innerHTML = '<div class="cart-empty"><h2>المنتج غير موجود</h2></div>'; return; }
 
   loader.style.display = 'flex';
@@ -149,7 +149,7 @@ function renderRelatedProducts(product) {
     const imgHtml = p.image
       ? `<img src="${p.image}" alt="${p.title}" loading="lazy" onerror="this.outerHTML='<i class=\\'fas ${p.icon}\\'></i>'">`
       : `<i class="fas ${p.icon}"></i>`;
-    return `<div class="product-card" onclick="window.location.href='product.html?id=${p.id}'">
+    return `<div class="product-card" onclick="routerNavigate('product?id=${p.id}')">
       <div class="product-img">${imgHtml}</div>
       <div class="product-body">
         <h3 class="product-title">${p.title}</h3>

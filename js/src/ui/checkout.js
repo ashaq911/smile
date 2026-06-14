@@ -85,7 +85,7 @@ export async function submitOrder(event) {
       throw new Error(err.error || 'فشل تقديم الطلب');
     }
     await clearCart();
-    window.location.href = 'orders.html';
+    routerNavigate('orders');
   } catch (e) {
     showToast(e.message);
   }

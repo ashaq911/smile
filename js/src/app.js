@@ -13,6 +13,7 @@ import { initAdminDashboard } from './ui/admin.js';
 import './ui/adminActions.js';
 import { showToast } from './ui/toast.js';
 import { addToCart, cartUpdateQuantity, cartRemove, cartClear } from './ui/cart.js';
+import { initRouter, navigate, registerPage } from './router.js';
 
 window.showLoginModal = showLoginModal;
 window.closeLoginModal = closeLoginModal;
@@ -56,14 +57,15 @@ function renderUI() {
   try { renderStoreDetail(); } catch (e) {}
   try { renderProductDetail(); } catch (e) {}
   try { renderCheckoutSummary(); } catch (e) {}
-  try { if (document.getElementById('adminContent')) initAdminDashboard(); } catch (e) {}
+}
+
+async function renderDataPages(params) {
+  const pid = params.get('id');
+  if (pid) renderProductDetail();
+  else document.getElementById('page-product').style.display = 'none';
 }
 
 async function initApp() {
-  const ready = document.readyState !== 'loading';
-  if (ready) renderUI();
-  else document.addEventListener('DOMContentLoaded', () => renderUI());
-
   try {
     await initAuth();
     await Promise.all([initStores(), initCategories(), initProducts()]);
@@ -71,9 +73,13 @@ async function initApp() {
     console.error('Init error:', e);
   }
 
-  if (document.readyState !== 'loading') renderUI();
-  else document.addEventListener('DOMContentLoaded', () => renderUI());
+  renderUI();
   initCart().then(() => { try { updateCartBadge(); } catch {} }).catch(() => {});
+
+  registerPage('store', (p) => { renderStoreDetail(); });
+  registerPage('product', (p) => { renderProductDetail(); });
+  registerPage('admin', () => { initAdminDashboard(); });
+  initRouter();
 }
 
 initApp();

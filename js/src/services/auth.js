@@ -34,8 +34,8 @@ export function logout() {
   setToken(null);
   setStoredUser(null);
   authUsers = [];
-  sessionStorage.clear();
-  window.location.reload();
+  window.routerNavigate('');
+  setTimeout(() => { document.querySelectorAll('.page-section').forEach(p => p.style.display = 'none'); document.getElementById('page-home').style.display = 'block'; }, 50);
 }
 
 export function getCurrentUser() {

@@ -261,7 +261,7 @@ function renderBrowseProducts(productList) {
     const imgHtml = product.image
       ? `<img src="${product.image}" alt="${product.title}" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\\'fas ${product.icon}\\'></i>'">`
       : `<i class="fas ${product.icon}"></i>`;
-    return `<div class="product-card" onclick="window.location.href='pages/product.html?id=${product.id}'">
+    return `<div class="product-card" onclick="routerNavigate('product?id=${product.id}')">
       <div class="product-img">${imgHtml}</div>
       <div class="product-body">
         <div class="product-category">${getSubcategoryName(product.subcategoryId)}</div>
@@ -321,7 +321,7 @@ export function renderAllStores() {
     return;
   }
   grid.innerHTML = visible.map(s => `
-    <div class="store-card" onclick="window.location.href='pages/store.html?id=${s.id}'">
+    <div class="store-card" onclick="routerNavigate('store?id=${s.id}')">
       <div class="store-card-icon"><i class="fas ${s.icon}"></i></div>
       <h3 class="store-card-name">${s.name}</h3>
       <p class="store-card-desc">${s.description}</p>
@@ -333,8 +333,8 @@ export function renderStoreDetail() {
   const container = document.getElementById('storeDetail');
   const productsContainer = document.getElementById('storeProducts');
   if (!container) return;
-  const params = new URLSearchParams(window.location.search);
-  const storeId = parseInt(params.get('id'));
+  const p = window._spaParams || new URLSearchParams(window.location.search);
+  const storeId = parseInt(p.get('id'));
   if (!storeId) { container.innerHTML = '<div class="cart-empty"><h2>المتجر غير موجود</h2></div>'; return; }
   const store = getStoreById(storeId);
   if (!store) { container.innerHTML = '<div class="cart-empty"><h2>المتجر غير موجود</h2></div>'; return; }

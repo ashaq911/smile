@@ -69,8 +69,12 @@ export async function processLogin() {
     closeLoginModal();
     updateAuthUI();
     showToast(`مرحباً، ${session.name || session.username}`);
-    const adminContent = document.getElementById('adminContent');
-    if (adminContent) initAdminDashboard();
+    const gate = document.getElementById('loginGate');
+    const content = document.getElementById('siteContent');
+    if (gate) gate.style.display = 'none';
+    if (content) content.style.display = 'block';
+    const hash = window.location.hash.slice(1) || '';
+    if (hash) window.routerNavigate(hash);
   } catch (e) {
     showToast(e.message || 'اسم المستخدم أو كلمة المرور غير صحيحة');
   }

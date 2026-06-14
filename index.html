@@ -7,19 +7,20 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script>(function(){const t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark');})();function toggleDarkMode(){const h=document.documentElement;const is=h.getAttribute('data-theme')==='dark';if(is){h.removeAttribute('data-theme');localStorage.setItem('theme','light')}else{h.setAttribute('data-theme','dark');localStorage.setItem('theme','dark')};const i=document.getElementById('darkToggle');if(i)i.innerHTML=is?'<i class=\"fas fa-moon\"></i>':'<i class=\"fas fa-sun\"></i>';}</script>
 </head>
 <body>
 
 <header class="header">
   <div class="container">
-    <a href="index.html" class="logo">سمايل</a>
+    <a href="#" onclick="routerNavigate('');return false;" class="logo">سمايل</a>
     <nav class="nav">
-      <a href="index.html" class="active">الرئيسية</a>
-      <a href="pages/stores.html">المتاجر</a>
-      <a href="pages/cart.html" id="cartNavLink">السلة <span class="cart-badge" id="cartBadge">0</span></a>
-      <a href="pages/orders.html" id="ordersNavLink">طلباتي</a>
-      <a href="pages/admin.html">لوحة التحكم</a>
+      <a href="#" onclick="routerNavigate('');return false;" data-page="">الرئيسية</a>
+      <a href="#" onclick="routerNavigate('stores');return false;" data-page="stores">المتاجر</a>
+      <a href="#" onclick="routerNavigate('cart');return false;" id="cartNavLink" data-page="cart">السلة <span class="cart-badge" id="cartBadge">0</span></a>
+      <a href="#" onclick="routerNavigate('orders');return false;" id="ordersNavLink" data-page="orders">طلباتي</a>
+      <a href="#" onclick="routerNavigate('admin');return false;" data-page="admin">لوحة التحكم</a>
     </nav>
     <div class="auth-section" id="authSection"></div>
     <button class="dark-toggle" onclick="toggleDarkMode()" title="الوضع الليلي" id="darkToggle"><i class="fas fa-moon"></i></button>
@@ -45,11 +46,11 @@
   </div>
 </div>
 
-
 <script>(function(){var u=localStorage.getItem("auth_user");if(u){var g=document.getElementById("loginGate");var s=document.getElementById("siteContent");if(g)g.style.display="none";if(s)s.style.display="block";}})()</script>
 
 <div class="site-content" id="siteContent" style="display:none;">
 
+<div class="page-section" id="page-home">
 <section class="hero">
   <div class="container">
     <div class="hero-content">
@@ -61,23 +62,11 @@
 
 <section class="browse-section" id="browse-section">
   <div class="container">
-
-    <!-- Breadcrumb -->
     <div class="browse-breadcrumb" id="browseBreadcrumb"></div>
-
-    <!-- Stores -->
     <div class="browse-stores" id="browseStores"></div>
-
-    <!-- Categories -->
     <div class="browse-categories" id="browseCategories" style="display:none;"></div>
-
-    <!-- Subcategories -->
     <div class="browse-subcategories" id="browseSubcategories" style="display:none;"></div>
-
-    <!-- Recently Viewed -->
     <div id="recentlyViewed"></div>
-
-    <!-- Products header with sort and price filter -->
     <div class="products-header">
       <h2 class="section-title" id="productsTitle">جميع المنتجات</h2>
       <div class="filter-controls">
@@ -100,18 +89,178 @@
         </div>
       </div>
     </div>
-
-    <!-- Loading spinner -->
-    <div class="loading-spinner" id="loadingSpinner" style="display:none;">
-      <i class="fas fa-spinner fa-spin"></i> جاري التحميل...
-    </div>
-
-    <!-- Products grid -->
+    <div class="loading-spinner" id="loadingSpinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
     <div class="product-grid" id="productGrid"></div>
     <div class="pagination" id="pagination"></div>
-
   </div>
 </section>
+</div>
+
+<div class="page-section" id="page-stores" style="display:none;">
+<section class="page-header">
+  <div class="container">
+    <h1>جميع المتاجر</h1>
+    <p>تصفح المنتجات حسب المتجر</p>
+  </div>
+</section>
+<section class="stores-page">
+  <div class="container">
+    <div class="stores-grid" id="allStoresGrid"></div>
+  </div>
+</section>
+</div>
+
+<div class="page-section" id="page-cart" style="display:none;">
+<section class="page-header">
+  <div class="container">
+    <h1>سلة التسوق</h1>
+    <p>راجع منتجاتك قبل إتمام الطلب</p>
+  </div>
+</section>
+<section class="cart-page">
+  <div class="container">
+    <div id="cartEmpty" class="cart-empty" style="display:none;">
+      <i class="fas fa-shopping-cart"></i>
+      <h2>سلتك فارغة</h2>
+      <p>أضف بعض المنتجات إلى السلة</p>
+      <a href="#" onclick="routerNavigate('');return false;" class="btn btn-primary">تسوق الآن</a>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-summary" id="cartSummary" style="display:none;"></div>
+  </div>
+</section>
+</div>
+
+<div class="page-section" id="page-orders" style="display:none;">
+<section class="page-header">
+  <div class="container">
+    <h1>طلباتي</h1>
+    <p>تتبع حالة طلباتك السابقة</p>
+  </div>
+</section>
+<section class="orders-page">
+  <div class="container" id="ordersContainer"></div>
+</section>
+</div>
+
+<div class="page-section" id="page-checkout" style="display:none;">
+<section class="page-header">
+  <div class="container">
+    <h1>إتمام الطلب</h1>
+    <p>أدخل معلومات الشحن والدفع</p>
+  </div>
+</section>
+<section class="checkout-page">
+  <div class="container">
+    <div class="checkout-grid">
+      <form class="checkout-form" id="checkoutForm" onsubmit="submitOrder(event)">
+        <h2>معلومات الشحن</h2>
+        <div id="savedAddressesContainer" style="margin-bottom:16px;display:none;">
+          <label>العناوين المحفوظة</label>
+          <select id="savedAddressSelect" onchange="fillAddress(event)" style="margin-bottom:8px;">
+            <option value="">-- اختر عنواناً محفوظاً --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>الاسم الكامل *</label>
+          <input type="text" id="custName" placeholder="أدخل اسمك كاملاً" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>رقم الجوال *</label>
+            <input type="tel" id="custPhone" placeholder="05xxxxxxxx" required>
+          </div>
+          <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="custEmail" placeholder="example@email.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>العنوان *</label>
+          <textarea id="custAddress" placeholder="الشارع، الحي، رقم المبنى" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>المدينة</label>
+          <select id="custCity">
+            <option value="بغداد">بغداد</option><option value="البصرة">البصرة</option><option value="الموصل">الموصل</option>
+            <option value="أربيل">أربيل</option><option value="السليمانية">السليمانية</option><option value="كركوك">كركوك</option>
+            <option value="النجف">النجف</option><option value="كربلاء">كربلاء</option><option value="الناصرية">الناصرية</option>
+            <option value="العمارة">العمارة</option><option value="الديوانية">الديوانية</option><option value="الحلة">الحلة</option>
+            <option value="الكوت">الكوت</option><option value="دهوك">دهوك</option><option value="الرمادي">الرمادي</option>
+            <option value="تكريت">تكريت</option><option value="سامراء">سامراء</option><option value="الفلوجة">الفلوجة</option>
+            <option value="أخرى">أخرى</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="saveAddressCheck" checked style="width:auto;">
+          <label for="saveAddressCheck" style="margin:0;">حفظ العنوان لعملية الشراء القادمة</label>
+        </div>
+        <h2 style="margin-top:24px;">طريقة الدفع</h2>
+        <div class="form-group">
+          <select id="paymentMethod">
+            <option value="cod">الدفع عند الاستلام</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:16px;">
+          <i class="fas fa-check"></i> تأكيد الطلب
+        </button>
+      </form>
+      <div class="checkout-summary" id="checkoutSummary">
+        <h3>ملخص الطلب</h3>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="page-section" id="page-store" style="display:none;">
+<section class="store-detail" id="storeDetail"></section>
+<section class="store-categories" id="storeCategories"></section>
+<section class="products">
+  <div class="container">
+    <h2 class="section-title">منتجات المتجر</h2>
+    <div class="product-grid" id="storeProducts"></div>
+    <div class="pagination" id="storePagination"></div>
+  </div>
+</section>
+</div>
+
+<div class="page-section" id="page-product" style="display:none;">
+<section class="page-header">
+  <div class="container">
+    <div class="browse-breadcrumb" id="productBreadcrumb"></div>
+  </div>
+</section>
+<section class="product-detail-section" id="productDetailContainer">
+  <div class="container">
+    <div class="product-loader" id="productLoader"><i class="fas fa-spinner fa-spin"></i> جاري تحميل المنتج...</div>
+  </div>
+</section>
+<section class="reviews-section" id="reviewsSection">
+  <div class="container">
+    <h2 class="section-title">التقييمات والمراجعات</h2>
+    <div id="reviewsContainer"></div>
+  </div>
+</section>
+<section class="related-products-section">
+  <div class="container">
+    <h2 class="section-title">منتجات ذات صلة</h2>
+    <div class="product-grid" id="relatedProducts"></div>
+  </div>
+</section>
+</div>
+
+<div class="page-section" id="page-admin" style="display:none;">
+<section class="page-header">
+  <div class="container">
+    <h1>لوحة التحكم</h1>
+    <p>إدارة المتاجر والأقسام والمنتجات والمبيعات</p>
+  </div>
+</section>
+<section class="admin-page">
+  <div class="container" id="adminContent"></div>
+</section>
+</div>
 
 </div><!-- /siteContent -->
 
@@ -124,10 +273,10 @@
       </div>
       <div class="footer-col">
         <h3>روابط سريعة</h3>
-        <a href="index.html">الرئيسية</a>
-        <a href="pages/stores.html">المتاجر</a>
-        <a href="pages/cart.html">السلة</a>
-        <a href="pages/orders.html">طلباتي</a>
+        <a href="#" onclick="routerNavigate('');return false;">الرئيسية</a>
+        <a href="#" onclick="routerNavigate('stores');return false;">المتاجر</a>
+        <a href="#" onclick="routerNavigate('cart');return false;">السلة</a>
+        <a href="#" onclick="routerNavigate('orders');return false;">طلباتي</a>
       </div>
       <div class="footer-col">
         <h3>تواصل معنا</h3>
@@ -205,7 +354,187 @@
   </div>
 </div>
 
+<!-- Admin Modals -->
+<div class="modal-overlay" id="storeModal" onclick="if(event.target===this)closeStoreModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="storeModalTitle">إضافة متجر جديد</h3>
+      <button class="modal-close" onclick="closeStoreModal()">&times;</button>
+    </div>
+    <form id="storeForm" onsubmit="event.preventDefault();saveStore()">
+      <input type="hidden" id="storeId">
+      <div class="form-group"><label>اسم المتجر *</label><input type="text" id="storeName" placeholder="اسم المتجر" required></div>
+      <div class="form-group"><label>الوصف</label><textarea id="storeDesc" placeholder="وصف المتجر"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>الأيقونة</label>
+          <select id="storeIcon">
+            <option value="fa-store">متجر</option><option value="fa-microchip">إلكترونيات</option><option value="fa-headphones">إكسسوارات</option>
+            <option value="fa-laptop">لابتوب</option><option value="fa-mobile-alt">جوالات</option><option value="fa-tshirt">ملابس</option>
+            <option value="fa-shoe-prints">أحذية</option><option value="fa-book">كتب</option><option value="fa-couch">أثاث</option>
+          </select>
+        </div>
+        <div class="form-group"><label>المالك</label><input type="text" id="storeOwner" placeholder="اسم المالك"></div>
+      </div>
+      <div class="form-group"><label>رقم الجوال</label><input type="tel" id="storePhone" placeholder="05xxxxxxxx"></div>
+      <div class="form-group"><label>معلومات الدفع لصاحب المتجر</label><textarea id="storePaymentInfo" placeholder="رقم الحساب البنكي أو أي تفاصيل دفع يريد صاحب المتجر تحويل المبلغ إليها" style="min-height:60px;"></textarea><p style="font-size:12px;color:var(--text-light);margin-top:2px;">سيظهر هذا النص لصاحب المتجر عند الدفع ليحول المبلغ إلى حسابك</p></div>
+      <div id="ownerCredentialsRow">
+        <div class="form-row">
+          <div class="form-group"><label>اسم المستخدم لصاحب المتجر *</label><input type="text" id="storeOwnerUsername" placeholder="اسم المستخدم للدخول"></div>
+          <div class="form-group"><label>كلمة المرور لصاحب المتجر *</label><input type="password" id="storeOwnerPassword" placeholder="كلمة المرور للدخول"></div>
+        </div>
+        <p style="font-size:12px;color:var(--text-light);margin-top:-8px;margin-bottom:12px;">سيتم إنشاء حساب لصاحب المتجر يمكنه من خلاله الدخول وإدارة متجره</p>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="categoryModal" onclick="if(event.target===this)closeCategoryModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="categoryModalTitle">إضافة قسم جديد</h3>
+      <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
+    </div>
+    <form id="categoryForm" onsubmit="event.preventDefault();saveCategory()">
+      <input type="hidden" id="categoryId">
+      <div class="form-group"><label>المتجر</label><select id="categoryStore"></select></div>
+      <div class="form-group"><label>اسم القسم *</label><input type="text" id="categoryName" placeholder="مثال: ملابس، إلكترونيات" required></div>
+      <div class="form-group" id="subNameGroup"><label>اسم التفرع</label><input type="text" id="categorySubName" placeholder="سيتم إنشاء تفرع بهذا الاسم"></div>
+      <div class="form-group"><label>الأيقونة</label>
+        <select id="categoryIcon">
+          <option value="fa-tshirt">ملابس</option><option value="fa-microchip">إلكترونيات</option><option value="fa-shoe-prints">أحذية</option>
+          <option value="fa-headphones">سماعات</option><option value="fa-mobile-alt">جوالات</option><option value="fa-laptop">لابتوب</option>
+          <option value="fa-tablet-alt">أجهزة لوحية</option><option value="fa-camera">كاميرات</option><option value="fa-clock">ساعات</option>
+          <option value="fa-plug">شواحن</option><option value="fa-folder">أخرى</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="subcategoryModal" onclick="if(event.target===this)closeSubcategoryModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="subcategoryModalTitle">إضافة تفرع جديد</h3>
+      <button class="modal-close" onclick="closeSubcategoryModal()">&times;</button>
+    </div>
+    <form id="subcategoryForm" onsubmit="event.preventDefault();saveSubcategory()">
+      <input type="hidden" id="subcategoryId">
+      <input type="hidden" id="subcategoryParent">
+      <div class="form-group"><label>اسم التفرع *</label><input type="text" id="subcategoryName" placeholder="مثال: ملابس رجالية، أحذية نسائية" required></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="productModal" onclick="if(event.target===this)closeProductModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="productModalTitle">إضافة منتج جديد</h3>
+      <button class="modal-close" onclick="closeProductModal()">&times;</button>
+    </div>
+    <form id="productForm" onsubmit="event.preventDefault();saveProduct()">
+      <input type="hidden" id="productId">
+      <div class="form-group"><label>اسم المنتج *</label><input type="text" id="productTitle" placeholder="اسم المنتج" required></div>
+      <div class="form-group"><label>الوصف</label><textarea id="productDesc" placeholder="وصف المنتج"></textarea></div>
+      <div class="form-group"><label>صورة المنتج</label><input type="file" id="productImage" accept="image/*"></div>
+      <div class="form-row">
+        <div class="form-group"><label>السعر *</label><input type="number" id="productPrice" placeholder="0" min="0" step="0.01"></div>
+        <div class="form-group"><label>المتجر</label><select id="productStore" onchange="window.updateSubcategorySelect()"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>التفرع</label><select id="productSubcategory"></select></div>
+        <div class="form-group"><label>رسوم الشحن (د.ع)</label><input type="number" id="productShipping" placeholder="0" min="0" step="100"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>الأيقونة</label>
+          <select id="productIcon">
+            <option value="fa-mobile-alt">جوال</option><option value="fa-laptop">لابتوب</option><option value="fa-headphones">سماعات</option>
+            <option value="fa-clock">ساعة</option><option value="fa-tablet-alt">جهاز لوحي</option><option value="fa-camera">كاميرا</option>
+            <option value="fa-mouse">ماوس</option><option value="fa-plug">شاحن</option><option value="fa-tshirt">تيشيرت</option>
+            <option value="fa-shoe-prints">حذاء</option><option value="fa-box">صندوق</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:8px;padding-top:24px;">
+          <input type="checkbox" id="productStock" checked style="width:auto;">
+          <label for="productStock" style="margin:0;">متوفر في المخزون</label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="ownerModal" onclick="if(event.target===this)closeOwnerModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>إضافة صاحب متجر</h3>
+      <button class="modal-close" onclick="closeOwnerModal()">&times;</button>
+    </div>
+    <form id="ownerForm" onsubmit="event.preventDefault();saveOwner()">
+      <input type="hidden" id="ownerId">
+      <div class="form-group"><label>المتجر</label><select id="ownerStore"></select></div>
+      <div class="form-group"><label>الاسم</label><input type="text" id="ownerName" placeholder="اسم صاحب المتجر" required></div>
+      <div class="form-group"><label>اسم المستخدم *</label><input type="text" id="ownerUsername" placeholder="اسم المستخدم للدخول" required></div>
+      <div class="form-group"><label>كلمة المرور *</label><input type="text" id="ownerPassword" placeholder="كلمة المرور للدخول" required></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="transferModal" onclick="if(event.target===this)closeTransferModal()">
+  <div class="modal login-modal">
+    <div class="modal-header">
+      <div style="text-align:center;width:100%;">
+        <div class="login-icon"><i class="fas fa-exchange-alt"></i></div>
+        <h3>تحويل الطلب لصاحب المتجر</h3>
+      </div>
+      <button class="modal-close" onclick="closeTransferModal()">&times;</button>
+    </div>
+    <form onsubmit="event.preventDefault();confirmTransfer()">
+      <input type="hidden" id="transferOrderId">
+      <input type="hidden" id="transferStoreId">
+      <div class="form-group">
+        <label id="transferAmountLabel">المبلغ المطلوب تحويله (د.ع):</label>
+        <input type="number" id="transferAmount" placeholder="أدخل المبلغ" min="0" step="0.01" required>
+      </div>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">
+        <i class="fas fa-info-circle"></i> عند تأكيد التحويل، سيظهر الطلب لصاحب المتجر مع إخفاء معلومات الزبون. بعد دفع صاحب المتجر للمبلغ، سيتم الكشف عن معلومات الزبون.
+      </p>
+      <button type="submit" class="btn btn-primary" style="width:100%;"><i class="fas fa-check"></i> تأكيد التحويل</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="storePaymentModal" onclick="if(event.target===this)closePaymentModal()">
+  <div class="modal login-modal">
+    <div class="modal-header">
+      <div style="text-align:center;width:100%;">
+        <div class="login-icon"><i class="fas fa-credit-card"></i></div>
+        <h3>دفع المبلغ للمدير</h3>
+      </div>
+      <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+    </div>
+    <div style="padding:8px 0;">
+      <input type="hidden" id="payOrderId">
+      <input type="hidden" id="payStoreId">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:36px;font-weight:800;color:var(--primary);margin-bottom:8px;" id="payAmount">0</div>
+        <div style="font-size:14px;color:var(--text-light);">المبلغ المطلوب تحويله</div>
+      </div>
+      <div style="background:var(--bg);border-radius:10px;padding:16px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;"><i class="fas fa-university"></i> معلومات الدفع (حساب المدير):</div>
+        <div id="payBankInfo" style="font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;"></div>
+      </div>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;text-align:center;">
+        <i class="fas fa-info-circle"></i> قم بتحويل المبلغ إلى حساب المدير أعلاه، ثم اضغط على "تأكيد الدفع" لإعلام المدير
+      </p>
+      <button class="btn btn-primary" onclick="confirmStorePayment()" style="width:100%;"><i class="fas fa-check"></i> تأكيد الدفع</button>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="js/src/app.js"></script>
 </body>
 </html>
-
