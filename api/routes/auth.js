@@ -1,6 +1,8 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const db = require('../db');
+const JWT_SECRET = process.env.JWT_SECRET || 'smayel-secret-key-change-in-production';
 const { generateToken, verifyToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
@@ -23,7 +25,7 @@ router.post('/register', async (req, res) => {
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) return res.status(401).json({ error: 'مطلوب تسجيل الدخول' });
     try {
-      const caller = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET || 'smayel-secret-key-change-in-production');
+      const caller = jwt.verify(header.split(' ')[1], JWT_SECRET);
       if (caller.role !== 'admin') return res.status(403).json({ error: 'لا توجد صلاحية' });
     } catch { return res.status(401).json({ error: 'رمز الدخول غير صالح' }); }
   }
