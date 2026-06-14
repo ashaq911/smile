@@ -207,92 +207,82 @@ export async function deleteAdminSubcategory(id) {
 window.deleteAdminSubcategory = deleteAdminSubcategory;
 
 // ===== PRODUCT CRUD =====
-export function showAddProductModal() {
+window.showAddProductModal = function() {
   document.getElementById('productForm').reset();
   document.getElementById('productModalTitle').textContent = 'إضافة منتج جديد';
   document.getElementById('productId').value = '';
-  const storeSel = document.getElementById('productStore');
-  storeSel.innerHTML = getStores().map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  storeSel.disabled = false;
-  const user = getCurrentUser();
-  if (user && user.role === 'store_owner' && user.storeId) {
-    storeSel.value = user.storeId;
-    storeSel.disabled = true;
-  }
-  updateSubcategorySelect();
+  var sel = document.getElementById('productStore');
+  sel.innerHTML = getStores().map(function(s) { return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('');
+  sel.disabled = false;
+  var u = getCurrentUser();
+  if (u && u.role === 'store_owner' && u.storeId) { sel.value = u.storeId; sel.disabled = true; }
+  window.updateSubcategorySelect();
   document.getElementById('productModal').style.display = 'flex';
-}
-window.showAddProductModal = showAddProductModal;
+};
 
-export function updateSubcategorySelect() {
-  const storeId = parseInt(document.getElementById('productStore')?.value);
-  const subSel = document.getElementById('productSubcategory');
-  if (!subSel) return;
-  let options = '<option value="">اختر التفرع...</option>';
-  if (storeId) {
-    const cats = getCategoriesByStore(storeId);
-    cats.forEach(cat => {
-      const subs = getSubcategoriesByCategory(cat.id);
-      subs.forEach(s => { options += `<option value="${s.id}">${cat.name} / ${s.name}</option>`; });
-    });
+window.updateSubcategorySelect = function() {
+  var sid = parseInt(document.getElementById('productStore').value);
+  var sub = document.getElementById('productSubcategory');
+  if (!sub) return;
+  var opts = '<option value="">اختر التفرع...</option>';
+  if (sid) {
+    var cats = getCategoriesByStore(sid);
+    for (var i = 0; i < cats.length; i++) {
+      var subs = getSubcategoriesByCategory(cats[i].id);
+      for (var j = 0; j < subs.length; j++) {
+        opts += '<option value="' + subs[j].id + '">' + cats[i].name + ' / ' + subs[j].name + '</option>';
+      }
+    }
   }
-  subSel.innerHTML = options;
-}
-window.updateSubcategorySelect = updateSubcategorySelect;
+  sub.innerHTML = opts;
+};
 
-export async function saveProduct() {
-  const id = document.getElementById('productId').value;
-  const storeSel = document.getElementById('productStore');
-  const storeId = storeSel.disabled ? parseInt(storeSel.value) : (parseInt(storeSel.value) || 1);
-  const title = document.getElementById('productTitle').value.trim();
-  const description = document.getElementById('productDesc').value.trim();
-  const price = parseFloat(document.getElementById('productPrice').value) || 0;
-  const icon = document.getElementById('productIcon').value || 'fa-box';
-  const inStock = document.getElementById('productStock').checked;
-  const subcategoryId = parseInt(document.getElementById('productSubcategory').value) || null;
-  const shippingFee = parseInt(document.getElementById('productShipping').value) || 0;
+window.saveProduct = async function() {
+  var id = document.getElementById('productId').value;
+  var sel = document.getElementById('productStore');
+  var storeId = sel.disabled ? parseInt(sel.value) : (parseInt(sel.value) || 1);
+  var title = document.getElementById('productTitle').value.trim();
+  var desc = document.getElementById('productDesc').value.trim();
+  var price = parseFloat(document.getElementById('productPrice').value) || 0;
+  var icon = document.getElementById('productIcon').value || 'fa-box';
+  var inStock = document.getElementById('productStock').checked;
+  var subId = parseInt(document.getElementById('productSubcategory').value) || null;
+  var ship = parseInt(document.getElementById('productShipping').value) || 0;
   if (!title || price <= 0) { showToast('يرجى إدخال اسم المنتج وسعر صالح'); return; }
-  let image = '';
-  const fileInput = document.getElementById('productImage');
-  if (fileInput && fileInput.files && fileInput.files[0]) {
+  var image = '';
+  var file = document.getElementById('productImage');
+  if (file && file.files && file.files[0]) {
     try {
-      const file = fileInput.files[0];
-      const reader = new FileReader();
-      image = await new Promise((resolve) => {
-        reader.onload = async (e) => {
-          const base64 = e.target.result;
-          const uploadRes = await fetch('/api/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-            body: JSON.stringify({ image: base64 })
-          });
-          if (uploadRes.ok) {
-            const uploadData = await uploadRes.json();
-            resolve(uploadData.url);
-          } else { resolve(''); }
+      image = await new Promise(function(res) {
+        var r = new FileReader();
+        r.onload = async function(e) {
+          var resp = await fetch('/api/upload', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('auth_token')}, body:JSON.stringify({image:e.target.result}) });
+          res(resp.ok ? (await resp.json()).url : '');
         };
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
+        r.onerror = function() { res(''); };
+        r.readAsDataURL(file.files[0]);
       });
-    } catch { image = ''; }
+    } catch(e) { image = ''; }
   }
-  const data = { title, description, price, icon, image, inStock, storeId, subcategoryId, shippingFee };
+  var data = { title:title, description:desc, price:price, icon:icon, image:image, inStock:inStock, storeId:storeId, subcategoryId:subId, shippingFee:ship };
   try {
-    const res = await fetch(`/api/products${id ? '/' + id : ''}`, {
+    var resp = await fetch('/api/products' + (id ? '/' + id : ''), {
       method: id ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+localStorage.getItem('auth_token') },
       body: JSON.stringify(data)
     });
-    if (!res.ok) { const e = await res.json().catch(() => ({ error: 'خطأ' })); throw new Error(e.error); }
+    if (!resp.ok) { var err = await resp.json().catch(function() { return {error:'خطأ'}; }); throw new Error(err.error); }
     showToast(id ? 'تم تحديث المنتج بنجاح' : 'تم إضافة المنتج بنجاح');
-  } catch (e) { showToast(e.message || 'فشل حفظ المنتج'); }
+  } catch(e) { showToast(e.message || 'فشل حفظ المنتج'); }
   document.getElementById('productModal').style.display = 'none';
-  try { (await import('../services/products.js')).initProducts().then(function() { initAdminDashboard(); }); } catch(e) { initAdminDashboard(); }
-}
-window.saveProduct = saveProduct;
+  try {
+    var m = await import('../services/products.js');
+    await m.initProducts();
+  } catch(e) {}
+  initAdminDashboard();
+};
 
-export function closeProductModal() { document.getElementById('productModal').style.display = 'none'; }
-window.closeProductModal = closeProductModal;
+window.closeProductModal = function() { document.getElementById('productModal').style.display = 'none'; };
 
 export async function deleteAdminProduct(id) {
   if (!confirm('هل أنت متأكد من حذف هذا المنتج؟')) return;

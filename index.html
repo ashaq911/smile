@@ -434,7 +434,7 @@
       <h3 id="productModalTitle">إضافة منتج جديد</h3>
       <button class="modal-close" onclick="closeProductModal()">&times;</button>
     </div>
-    <form id="productForm" onsubmit="event.preventDefault();saveProduct()">
+    <form id="productForm" onsubmit="return false">
       <input type="hidden" id="productId">
       <div class="form-group"><label>اسم المنتج *</label><input type="text" id="productTitle" placeholder="اسم المنتج" required></div>
       <div class="form-group"><label>الوصف</label><textarea id="productDesc" placeholder="وصف المنتج"></textarea></div>
@@ -461,7 +461,7 @@
           <label for="productStock" style="margin:0;">متوفر في المخزون</label>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
+      <button type="button" class="btn btn-primary" style="width:100%;" onclick="window.saveProduct()">حفظ</button>
     </form>
   </div>
 </div>
