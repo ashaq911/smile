@@ -52,6 +52,18 @@ async function fetchOrdersForOwner(storeId) {
   } catch { cachedOrders = []; }
 }
 
+function loadAdminCache(user) {
+  const key = 'cache_admin_' + user.id;
+  const raw = localStorage.getItem(key);
+  if (raw) try { const d = JSON.parse(raw); cachedOrders = d.orders || []; cachedTransfers = d.transfers || []; cachedOwners = d.owners || []; return true; } catch {}
+  return false;
+}
+
+function saveAdminCache(user) {
+  const key = 'cache_admin_' + user.id;
+  localStorage.setItem(key, JSON.stringify({ orders: cachedOrders, transfers: cachedTransfers, owners: cachedOwners }));
+}
+
 export async function initAdminDashboard() {
   const container = document.getElementById('adminContent');
   if (!container) return;
@@ -61,10 +73,15 @@ export async function initAdminDashboard() {
     return;
   }
   if (user.role === 'admin') {
-    container.innerHTML = '<div class="admin-loading" style="text-align:center;padding:60px;"><i class="fas fa-spinner fa-spin fa-3x" style="color:var(--primary);"></i><p style="margin-top:16px;color:var(--text-light);">جاري تحميل لوحة التحكم...</p></div>';
-    await Promise.all([fetchAdminData(), fetchOwners()]);
-    try { await renderFullAdminDashboard(); } catch (e) {
-      container.innerHTML = '<div class="cart-empty"><h2>حدث خطأ</h2><p>تعذر تحميل بيانات لوحة التحكم، حاول التحديث</p></div>';
+    const hasCache = loadAdminCache(user);
+    if (hasCache) {
+      renderFullAdminDashboard();
+      Promise.all([fetchAdminData(), fetchOwners()]).then(() => { try { saveAdminCache(user); renderFullAdminDashboard(); } catch {} }).catch(() => {});
+    } else {
+      container.innerHTML = '<div class="admin-loading" style="text-align:center;padding:60px;"><i class="fas fa-spinner fa-spin fa-3x" style="color:var(--primary);"></i><p style="margin-top:16px;color:var(--text-light);">جاري تحميل لوحة التحكم...</p></div>';
+      await Promise.all([fetchAdminData(), fetchOwners()]);
+      saveAdminCache(user);
+      try { await renderFullAdminDashboard(); } catch (e) { container.innerHTML = '<div class="cart-empty"><h2>حدث خطأ</h2><p>تعذر تحميل بيانات لوحة التحكم، حاول التحديث</p></div>'; }
     }
   } else if (user.role === 'store_owner') {
     await fetchOrdersForOwner(user.storeId);
