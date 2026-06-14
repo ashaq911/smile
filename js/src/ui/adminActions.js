@@ -99,6 +99,8 @@ export function showAddCategoryModal() {
   document.getElementById('categoryId').value = '';
   const sel = document.getElementById('categoryStore');
   sel.innerHTML = getStores().map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  const u = getCurrentUser();
+  if (u && u.role === 'store_owner' && u.storeId) { sel.value = u.storeId; sel.disabled = true; }
   const subGroup = document.getElementById('subNameGroup');
   if (subGroup) subGroup.style.display = 'block';
   document.getElementById('categoryModal').style.display = 'flex';
@@ -108,12 +110,15 @@ window.showAddCategoryModal = showAddCategoryModal;
 export function editCategory(id) {
   const cat = getCategoryById(id);
   if (!cat) return;
+  const u = getCurrentUser();
+  if (u && u.role === 'store_owner' && u.storeId !== cat.storeId) { showToast('لا تصلاحية لك لهذا القسم'); return; }
   document.getElementById('categoryModalTitle').textContent = 'تعديل القسم';
   document.getElementById('categoryId').value = cat.id;
   document.getElementById('categoryName').value = cat.name;
   document.getElementById('categoryIcon').value = cat.icon || 'fa-folder';
   const sel = document.getElementById('categoryStore');
   sel.innerHTML = getStores().map(s => `<option value="${s.id}" ${s.id === cat.storeId ? 'selected' : ''}>${s.name}</option>`).join('');
+  if (u && u.role === 'store_owner') sel.disabled = true;
   const subGroup = document.getElementById('subNameGroup');
   if (subGroup) subGroup.style.display = 'none';
   document.getElementById('categoryModal').style.display = 'flex';

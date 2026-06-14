@@ -15,22 +15,29 @@ router.get('/', async (req, res) => {
   res.json(categories);
 });
 
-router.post('/', verifyToken, requireRole('admin'), async (req, res) => {
+router.post('/', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
   const { storeId, name, icon } = req.body;
   if (!storeId || !name) return res.status(400).json({ error: 'بيانات القسم غير مكتملة' });
+  if (req.user.role === 'store_owner' && req.user.storeId !== storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
   const result = await db.prepare('INSERT INTO categories ("storeId", name, icon) VALUES (?, ?, ?) RETURNING id')
     .run(storeId, name, icon || 'fa-folder');
   res.json({ id: result.rows[0].id });
 });
 
-router.put('/:id', verifyToken, requireRole('admin'), async (req, res) => {
+router.put('/:id', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
   const { name, icon } = req.body;
+  const cat = await db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
+  if (!cat) return res.status(404).json({ error: 'القسم غير موجود' });
+  if (req.user.role === 'store_owner' && req.user.storeId !== cat.storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
   await db.prepare('UPDATE categories SET name=?, icon=? WHERE id=?')
     .run(name, icon || 'fa-folder', req.params.id);
   res.json({ success: true });
 });
 
-router.delete('/:id', verifyToken, requireRole('admin'), async (req, res) => {
+router.delete('/:id', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
+  const cat = await db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
+  if (!cat) return res.status(404).json({ error: 'القسم غير موجود' });
+  if (req.user.role === 'store_owner' && req.user.storeId !== cat.storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
   await db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });
@@ -46,20 +53,29 @@ router.get('/subcategories', async (req, res) => {
   res.json(subs);
 });
 
-router.post('/subcategories', verifyToken, requireRole('admin'), async (req, res) => {
+router.post('/subcategories', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
   const { categoryId, name } = req.body;
   if (!categoryId || !name) return res.status(400).json({ error: 'بيانات التفرع غير مكتملة' });
+  const cat = await db.prepare('SELECT * FROM categories WHERE id = ?').get(categoryId);
+  if (!cat) return res.status(404).json({ error: 'القسم غير موجود' });
+  if (req.user.role === 'store_owner' && req.user.storeId !== cat.storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
   const result = await db.prepare('INSERT INTO subcategories (categoryId, name) VALUES (?, ?) RETURNING id').run(categoryId, name);
   res.json({ id: result.rows[0].id });
 });
 
-router.put('/subcategories/:id', verifyToken, requireRole('admin'), async (req, res) => {
+router.put('/subcategories/:id', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
   const { name } = req.body;
+  const sub = await db.prepare('SELECT s.*, c."storeId" FROM subcategories s JOIN categories c ON c.id = s.categoryId WHERE s.id = ?').get(req.params.id);
+  if (!sub) return res.status(404).json({ error: 'التفرع غير موجود' });
+  if (req.user.role === 'store_owner' && req.user.storeId !== sub.storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
   await db.prepare('UPDATE subcategories SET name=? WHERE id=?').run(name, req.params.id);
   res.json({ success: true });
 });
 
-router.delete('/subcategories/:id', verifyToken, requireRole('admin'), async (req, res) => {
+router.delete('/subcategories/:id', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
+  const sub = await db.prepare('SELECT s.*, c."storeId" FROM subcategories s JOIN categories c ON c.id = s.categoryId WHERE s.id = ?').get(req.params.id);
+  if (!sub) return res.status(404).json({ error: 'التفرع غير موجود' });
+  if (req.user.role === 'store_owner' && req.user.storeId !== sub.storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
   await db.prepare('DELETE FROM subcategories WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });

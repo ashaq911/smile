@@ -461,7 +461,6 @@ window.openAddProductModal = function() {
   sel.disabled = false;
   var u = getCurrentUser();
   if (u && u.role === 'store_owner' && u.storeId) { sel.value = u.storeId; sel.disabled = true; }
-  var subs = document.getElementById('productSubcategory');
-  if (subs) { subs.innerHTML = '<option value="">اختر التفرع...</option>'; }
+  if (window.updateSubcategorySelect) { try { window.updateSubcategorySelect(); } catch(e) {} }
   document.getElementById('productModal').style.display = 'flex';
 };
