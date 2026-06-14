@@ -29,10 +29,19 @@ router.post('/register', async (req, res) => {
   }
   try {
     const hash = bcrypt.hashSync(password, 8);
-    const result = await db.prepare('INSERT INTO users (username, password, role, name, storeId) VALUES (?, ?, ?, ?, ?) ON CONFLICT (username) DO NOTHING RETURNING id, username, role, name, storeId')
-      .run(username, hash, role || 'customer', name || '', storeId || null);
-    if (!result.rows || !result.rows[0]) return res.status(409).json({ error: 'اسم المستخدم موجود بالفعل' });
-    const user = result.rows[0];
+    let rows;
+    try {
+      rows = await db.runQueryDirect(
+        'INSERT INTO users (username, password, role, name, storeId) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (username) DO NOTHING RETURNING id, username, role, name, storeId',
+        [username, hash, role || 'customer', name || '', storeId || null]
+      );
+    } catch {
+      const result = await db.prepare('INSERT INTO users (username, password, role, name, storeId) VALUES (?, ?, ?, ?, ?) ON CONFLICT (username) DO NOTHING RETURNING id, username, role, name, storeId')
+        .run(username, hash, role || 'customer', name || '', storeId || null);
+      rows = result.rows;
+    }
+    if (!rows || !rows[0]) return res.status(409).json({ error: 'اسم المستخدم موجود بالفعل' });
+    const user = rows[0];
     const token = generateToken({ id: user.id, username: user.username, role: user.role, storeId: user.storeId, name: user.name });
     res.json({ token, user: { id: user.id, username: user.username, role: user.role, storeId: user.storeId, name: user.name } });
   } catch (e) {
