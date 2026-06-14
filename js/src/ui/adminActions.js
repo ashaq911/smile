@@ -207,19 +207,6 @@ export async function deleteAdminSubcategory(id) {
 window.deleteAdminSubcategory = deleteAdminSubcategory;
 
 // ===== PRODUCT CRUD =====
-window.showAddProductModal = function() {
-  document.getElementById('productForm').reset();
-  document.getElementById('productModalTitle').textContent = 'إضافة منتج جديد';
-  document.getElementById('productId').value = '';
-  var sel = document.getElementById('productStore');
-  sel.innerHTML = getStores().map(function(s) { return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('');
-  sel.disabled = false;
-  var u = getCurrentUser();
-  if (u && u.role === 'store_owner' && u.storeId) { sel.value = u.storeId; sel.disabled = true; }
-  window.updateSubcategorySelect();
-  document.getElementById('productModal').style.display = 'flex';
-};
-
 window.updateSubcategorySelect = function() {
   var sid = parseInt(document.getElementById('productStore').value);
   var sub = document.getElementById('productSubcategory');

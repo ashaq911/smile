@@ -219,7 +219,7 @@ async function renderFullAdminDashboard() {
     </div>
     <div class="admin-tab-content" id="adminTabProducts" style="display:none;">
       <h2 class="section-title">إدارة المنتجات</h2>
-      <button class="btn btn-primary" onclick="window.showAddProductModal()" style="margin-bottom:20px;"><i class="fas fa-plus"></i> إضافة منتج جديد</button>
+      <button class="btn btn-primary" onclick="window.openAddProductModal()" style="margin-bottom:20px;"><i class="fas fa-plus"></i> إضافة منتج جديد</button>
       <div class="table-wrapper"><table class="admin-table">
         <thead><tr><th>#</th><th>المنتج</th><th>التفرع</th><th>المتجر</th><th>السعر</th><th>الحالة</th><th>الإجراء</th></tr></thead>
         <tbody>${getProducts().map(p => {
@@ -378,7 +378,7 @@ function renderStoreOwnerDashboard(storeId) {
     </div>
     <div class="admin-tab-content" id="adminTabProducts">
       <h2 class="section-title">منتجات المتجر</h2>
-      <button class="btn btn-primary" onclick="window.showAddProductModal()" style="margin-bottom:20px;"><i class="fas fa-plus"></i> إضافة منتج جديد</button>
+      <button class="btn btn-primary" onclick="window.openAddProductModal()" style="margin-bottom:20px;"><i class="fas fa-plus"></i> إضافة منتج جديد</button>
       ${storeProducts.length === 0 ? '<p style="text-align:center;color:var(--text-light);padding:40px;">لا توجد منتجات في هذا المتجر</p>' : `
       <div class="table-wrapper"><table class="admin-table">
         <thead><tr><th>#</th><th>المنتج</th><th>التفرع</th><th>السعر</th><th>الحالة</th><th>الإجراء</th></tr></thead>
@@ -448,3 +448,20 @@ function renderStoreOwnerDashboard(storeId) {
       }).join('')}
     </div>`;
 }
+
+window.openAddProductModal = function() {
+  document.getElementById('productForm').reset();
+  document.getElementById('productModalTitle').textContent = 'إضافة منتج جديد';
+  document.getElementById('productId').value = '';
+  var sel = document.getElementById('productStore');
+  var stores = getStores();
+  var html = '';
+  for (var i = 0; i < stores.length; i++) { html += '<option value="' + stores[i].id + '">' + stores[i].name + '</option>'; }
+  sel.innerHTML = html;
+  sel.disabled = false;
+  var u = getCurrentUser();
+  if (u && u.role === 'store_owner' && u.storeId) { sel.value = u.storeId; sel.disabled = true; }
+  var subs = document.getElementById('productSubcategory');
+  if (subs) { subs.innerHTML = '<option value="">اختر التفرع...</option>'; }
+  document.getElementById('productModal').style.display = 'flex';
+};
