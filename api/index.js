@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use((req, res, next) => {
   const timer = setTimeout(() => {
     if (!res.headersSent) res.status(504).json({ error: 'الخادم لم يستجب، حاول مرة أخرى' });
-  }, 25000);
+  }, 35000);
   res.on('finish', () => clearTimeout(timer));
   next();
 });

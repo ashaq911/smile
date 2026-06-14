@@ -1,12 +1,11 @@
 const { Pool } = require('pg');
 
-function createPools() {
+function createPool() {
   const DATABASE_URL = process.env.DATABASE_URL;
   if (!DATABASE_URL) {
     console.error('DATABASE_URL environment variable is not set!');
-    return { pool: null, directPool: null };
+    return null;
   }
-
   const pool = new Pool({
     connectionString: DATABASE_URL,
     connectionTimeoutMillis: 30000,
@@ -14,29 +13,11 @@ function createPools() {
     max: 3,
     ssl: { rejectUnauthorized: false }
   });
-
-  // Try direct connection (bypass pooler, may fail on IPv4-only networks)
-  let directPool = null;
-  try {
-    const pwd = DATABASE_URL.split(':')[2].split('@')[0];
-    const directUrl = `postgresql://postgres:${pwd}@db.ndtmffadeaadywnykzgr.supabase.co:5432/postgres`;
-    directPool = new Pool({
-      connectionString: directUrl,
-      connectionTimeoutMillis: 8000,
-      idleTimeoutMillis: 300000,
-      max: 1,
-      ssl: { rejectUnauthorized: false }
-    });
-    directPool.query('SELECT 1').catch(() => { directPool = null; });
-  } catch { directPool = null; }
-
-  // Warm up main pool
   pool.query('SELECT 1').catch(() => {});
-
-  return { pool, directPool };
+  return pool;
 }
 
-const { pool, directPool } = createPools();
+const pool = createPool();
 
 async function runQuery(sql, params, method) {
   const client = await pool.connect();
@@ -73,11 +54,4 @@ setInterval(() => {
   pool.query('SELECT 1').catch(() => {});
 }, 30000);
 
-db.directPool = directPool;
-db.runQueryDirect = async function(sql, params) {
-  if (!directPool) throw new Error('Direct connection not available');
-  const client = await directPool.connect();
-  try { return (await client.query(sql, params || [])).rows; }
-  finally { client.release(); }
-};
 module.exports = db;
