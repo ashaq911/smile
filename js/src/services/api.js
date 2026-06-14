@@ -37,6 +37,6 @@ async function request(method, path, body, timeout) {
 }
 
 export function apiGet(path) { return request('GET', path, undefined, 6000); }
-export function apiPost(path, body) { return request('POST', path, body, 15000); }
-export function apiPut(path, body) { return request('PUT', path, body, 15000); }
-export function apiDelete(path) { return request('DELETE', path, undefined, 15000); }
+export function apiPost(path, body) { return request('POST', path, body, 30000); }
+export function apiPut(path, body) { return request('PUT', path, body, 30000); }
+export function apiDelete(path) { return request('DELETE', path, undefined, 30000); }

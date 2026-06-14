@@ -8,9 +8,9 @@ if (!DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  connectionTimeoutMillis: 5000,
-  idleTimeoutMillis: 5000,
-  max: 3,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 10000,
+  max: 5,
   ssl: DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 

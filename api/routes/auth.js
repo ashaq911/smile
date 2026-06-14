@@ -19,13 +19,15 @@ router.post('/login', async (req, res) => {
 router.post('/register', async (req, res) => {
   const { username, password, name, role, storeId } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'الرجاء إدخال اسم المستخدم وكلمة المرور' });
-  const existing = await db.prepare('SELECT id FROM users WHERE username = ?').get(username);
-  if (existing) return res.status(409).json({ error: 'اسم المستخدم موجود بالفعل' });
+  try {
+    const existing = await db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+    if (existing) return res.status(409).json({ error: 'اسم المستخدم موجود بالفعل' });
+  } catch { /* continue */ }
   const hash = bcrypt.hashSync(password, 10);
-  const result = await db.prepare('INSERT INTO users (username, password, role, name, storeId) VALUES (?, ?, ?, ?, ?) RETURNING id')
+  const result = await db.prepare('INSERT INTO users (username, password, role, name, storeId) VALUES (?, ?, ?, ?, ?) RETURNING id, username, role, name, storeId')
     .run(username, hash, role || 'customer', name || '', storeId || null);
-  const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(result.rows[0].id);
-  const token = generateToken(user);
+  const user = result.rows[0];
+  const token = generateToken({ id: user.id, username: user.username, role: user.role, storeId: user.storeId, name: user.name });
   res.json({ token, user: { id: user.id, username: user.username, role: user.role, storeId: user.storeId, name: user.name } });
 });
 

@@ -62,7 +62,7 @@ export async function saveStore() {
     }
     document.getElementById('storeModal').style.display = 'none';
     initAdminDashboard();
-  } catch (e) { showToast(e.message || 'فشل الحفظ، حاول مرة أخرى'); }
+  } catch (e) { showToast('فشل حفظ المتجر: ' + (e.message || 'الخادم لم يستجب')); }
   if (btn) { btn.disabled = false; btn.innerHTML = 'حفظ'; }
 }
 window.saveStore = saveStore;
@@ -447,7 +447,7 @@ export async function saveOwner() {
     showToast('تم إضافة صاحب المتجر بنجاح');
     document.getElementById('ownerModal').style.display = 'none';
     initAdminDashboard();
-  } catch (e) { showToast(e.message || 'فشل الحفظ، حاول مرة أخرى'); }
+  } catch (e) { showToast('فشل إضافة صاحب المتجر: ' + (e.message || 'الخادم لم يستجب')); }
   if (btn) { btn.disabled = false; btn.innerHTML = 'حفظ'; }
 }
 window.saveOwner = saveOwner;
