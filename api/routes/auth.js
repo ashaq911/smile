@@ -19,6 +19,14 @@ router.post('/login', async (req, res) => {
 router.post('/register', async (req, res) => {
   const { username, password, name, role, storeId } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'الرجاء إدخال اسم المستخدم وكلمة المرور' });
+  if (role === 'store_owner' || role === 'admin') {
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith('Bearer ')) return res.status(401).json({ error: 'مطلوب تسجيل الدخول' });
+    try {
+      const caller = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET || 'smayel-secret-key-change-in-production');
+      if (caller.role !== 'admin') return res.status(403).json({ error: 'لا توجد صلاحية' });
+    } catch { return res.status(401).json({ error: 'رمز الدخول غير صالح' }); }
+  }
   try {
     const hash = bcrypt.hashSync(password, 8);
     const result = await db.prepare('INSERT INTO users (username, password, role, name, storeId) VALUES (?, ?, ?, ?, ?) ON CONFLICT (username) DO NOTHING RETURNING id, username, role, name, storeId')
@@ -29,7 +37,7 @@ router.post('/register', async (req, res) => {
     res.json({ token, user: { id: user.id, username: user.username, role: user.role, storeId: user.storeId, name: user.name } });
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ error: 'اسم المستخدم موجود بالفعل' });
-    throw e;
+    if (!res.headersSent) res.status(500).json({ error: 'خطأ في الخادم' });
   }
 });
 

@@ -45,9 +45,10 @@ const db = {
   }
 };
 
-// Keep-alive ping every 60s to prevent cold starts
+// Warm up DB connection immediately and every 30s
+pool.query('SELECT 1').catch(() => {});
 setInterval(() => {
   pool.query('SELECT 1').catch(() => {});
-}, 60000);
+}, 30000);
 
 module.exports = db;
