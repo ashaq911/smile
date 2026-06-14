@@ -52,7 +52,6 @@ function renderUI() {
   try { updateCartBadge(); } catch (e) {}
   try { renderCart(); } catch (e) {}
   try { initBrowse(); } catch (e) {}
-  try { renderOrders(); } catch (e) {}
   try { renderAllStores(); } catch (e) {}
   try { renderStoreDetail(); } catch (e) {}
   try { renderProductDetail(); } catch (e) {}
@@ -66,12 +65,8 @@ async function renderDataPages(params) {
 }
 
 async function initApp() {
-  try {
-    await initAuth();
-    await Promise.all([initStores(), initCategories(), initProducts()]);
-  } catch (e) {
-    console.error('Init error:', e);
-  }
+  initAuth();
+  Promise.all([initStores(), initCategories(), initProducts()]).catch(() => {});
 
   renderUI();
   initCart().then(() => { try { updateCartBadge(); } catch {} }).catch(() => {});
@@ -79,6 +74,7 @@ async function initApp() {
   registerPage('store', (p) => { renderStoreDetail(); });
   registerPage('product', (p) => { renderProductDetail(); });
   registerPage('admin', () => { initAdminDashboard(); });
+  registerPage('orders', () => { renderOrders(); });
   initRouter();
 }
 

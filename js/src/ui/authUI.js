@@ -64,6 +64,8 @@ export async function processLogin() {
   const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value.trim();
   if (!username || !password) { showToast('يرجى إدخال اسم المستخدم وكلمة المرور'); return; }
+  const btn = document.querySelector('#loginModal .btn-primary');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الدخول...'; }
   try {
     const session = await login(username, password);
     closeLoginModal();
@@ -78,6 +80,7 @@ export async function processLogin() {
   } catch (e) {
     showToast(e.message || 'اسم المستخدم أو كلمة المرور غير صحيحة');
   }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> دخول'; }
 }
 window.processLogin = processLogin;
 

@@ -36,18 +36,17 @@ async function fetchOwners() {
 async function fetchOrdersForOwner(storeId) {
   try {
     const token = localStorage.getItem('auth_token');
-    const res = await fetch('/api/orders', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (res.ok) {
-      const all = await res.json();
-      cachedOrders = all.filter(o => o.items && o.items.some(i => i.storeId === storeId));
-      for (const o of cachedOrders) {
-        const tres = await fetch(`/api/orders/transfers?orderId=${o.id}&storeId=${storeId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (tres.ok) o._transfer = await tres.json();
-      }
+    const ac = new AbortController();
+    setTimeout(() => ac.abort(), 8000);
+    const res = await fetch('/api/orders', { signal: ac.signal, headers: { 'Authorization': `Bearer ${token}` } });
+    if (!res.ok) { cachedOrders = []; return; }
+    const all = await res.json();
+    cachedOrders = all.filter(o => o.items && o.items.some(i => i.storeId === storeId));
+    // Lazy load transfers in background
+    for (const o of cachedOrders) {
+      fetch(`/api/orders/transfers?orderId=${o.id}&storeId=${storeId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(r => r.ok ? r.json() : []).then(t => { o._transfer = t; }).catch(() => {});
     }
   } catch { cachedOrders = []; }
 }
