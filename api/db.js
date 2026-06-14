@@ -8,9 +8,9 @@ if (!DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  connectionTimeoutMillis: 10000,
-  idleTimeoutMillis: 10000,
-  max: 5,
+  connectionTimeoutMillis: 15000,
+  idleTimeoutMillis: 300000,
+  max: 3,
   ssl: DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
@@ -44,5 +44,10 @@ const db = {
     return runQuery(sql, [], 'run');
   }
 };
+
+// Keep-alive ping every 60s to prevent cold starts
+setInterval(() => {
+  pool.query('SELECT 1').catch(() => {});
+}, 60000);
 
 module.exports = db;

@@ -48,6 +48,7 @@ export async function saveStore() {
   const btn = document.querySelector('#storeForm button[type="submit"]');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'; }
   try {
+    await fetch('/api/ping').catch(() => {});
     if (id) { await updateStore(parseInt(id), data); showToast('تم تحديث المتجر بنجاح'); }
     else {
       const newStore = await addStore(data.name, data.description, data.icon, data.owner, data.phone, data.paymentInfo);
@@ -443,6 +444,8 @@ export async function saveOwner() {
   const btn = document.querySelector('#ownerForm button[type="submit"]');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'; }
   try {
+    // Warm up DB connection first
+    await fetch('/api/ping').catch(() => {});
     await addStoreOwner(username, password, name, storeId);
     showToast('تم إضافة صاحب المتجر بنجاح');
     document.getElementById('ownerModal').style.display = 'none';

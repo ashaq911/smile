@@ -16,8 +16,17 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use((req, res, next) => {
-  res.setTimeout(9000, () => { res.status(504).json({ error: 'الخادم لم يستجب في الوقت المحدد، حاول مرة أخرى' }); });
+  const timer = setTimeout(() => {
+    if (!res.headersSent) res.status(504).json({ error: 'الخادم لم يستجب، حاول مرة أخرى' });
+  }, 9000);
+  res.on('finish', () => clearTimeout(timer));
   next();
+});
+
+// Quick DB ping to warm up connection
+app.get('/api/ping', async (req, res) => {
+  try { await require('./db').prepare('SELECT 1').get(); res.json({ ok: true }); }
+  catch { res.json({ ok: false }); }
 });
 
 // DB health check
