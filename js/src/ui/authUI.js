@@ -76,7 +76,7 @@ export async function processLogin() {
     if (gate) gate.style.display = 'none';
     if (content) content.style.display = 'block';
     const hash = window.location.hash.slice(1) || '';
-    if (hash) window.routerNavigate(hash);
+    if (hash) { window.routerNavigate(hash); } else { window.navigateHome(); }
   } catch (e) {
     showToast(e.message || 'اسم المستخدم أو كلمة المرور غير صحيحة');
   }

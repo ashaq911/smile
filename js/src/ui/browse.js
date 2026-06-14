@@ -1,7 +1,7 @@
 import { getCurrentUser } from '../services/auth.js';
 import { getStoreById, getStores } from '../services/stores.js';
 import { getSubcategoryById, getSubcategoriesByCategory, getCategoryById, getCategories, getSubcategories } from '../services/categories.js';
-import { getProducts, getProductById, searchProducts, getSubcategoryProductCount } from '../services/products.js';
+import { getProducts, getProductById, searchProducts, getSubcategoryProductCount, initProducts } from '../services/products.js';
 import { getCartCount } from '../services/cart.js';
 import { showToast } from './toast.js';
 
@@ -10,7 +10,8 @@ let browseState = { storeId: null, categoryId: null, subcategoryId: null };
 let currentPage = 1;
 let priceRange = { min: 0, max: Infinity };
 
-export function initBrowse() {
+export async function initBrowse() {
+  await initProducts();
   document.getElementById('productGrid')?.classList.add('loading');
   renderBrowseStores();
   renderBrowseProducts(getVisibleProducts());

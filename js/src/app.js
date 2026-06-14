@@ -15,6 +15,18 @@ import { showToast } from './ui/toast.js';
 import { addToCart, cartUpdateQuantity, cartRemove, cartClear } from './ui/cart.js';
 import { initRouter, navigate, registerPage } from './router.js';
 
+window.navigateHome = function() {
+  document.querySelectorAll('.page-section').forEach(function(p) { p.style.display = 'none'; });
+  var home = document.getElementById('page-home');
+  if (home) home.style.display = 'block';
+  document.querySelectorAll('.nav a').forEach(function(a) { a.classList.remove('active'); });
+  var link = document.querySelector('.nav a[data-page=""]');
+  if (link) link.classList.add('active');
+  document.title = 'سمايل - للتسوق الإلكتروني';
+  var t = document.getElementById('productsTitle');
+  if (t) t.textContent = 'جميع المنتجات';
+  try { initBrowse(); } catch (e) {}
+};
 window.showLoginModal = showLoginModal;
 window.closeLoginModal = closeLoginModal;
 window.showRegisterModal = showRegisterModal;
@@ -80,6 +92,8 @@ async function initApp() {
   renderUI();
   initCart().then(() => { try { updateCartBadge(); } catch {} }).catch(() => {});
 
+  registerPage('', () => { initBrowse(); });
+  registerPage('stores', () => { renderAllStores(); });
   registerPage('store', (p) => { renderStoreDetail(); });
   registerPage('product', (p) => { renderProductDetail(); });
   registerPage('admin', () => { initAdminDashboard(); });

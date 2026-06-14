@@ -15,8 +15,9 @@ export function navigate(path) {
 
   document.querySelectorAll('.page-section').forEach(p => p.style.display = 'none');
 
-  const section = document.getElementById('page-' + page);
-  if (!section) { navigate(''); return; }
+  const sectionId = page ? 'page-' + page : 'page-home';
+  const section = document.getElementById(sectionId);
+  if (!section) return;
 
   const isProtected = protectedPages.includes(page);
   const user = getCurrentUser();
