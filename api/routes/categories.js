@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
   const { storeId } = req.query;
   let categories;
   if (storeId) {
-    categories = await db.prepare('SELECT * FROM categories WHERE storeId = ? ORDER BY name').all(storeId);
+    categories = await db.prepare('SELECT * FROM categories WHERE "storeId" = ? ORDER BY name').all(storeId);
   } else {
     categories = await db.prepare('SELECT * FROM categories ORDER BY name').all();
   }
@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
 router.post('/', verifyToken, requireRole('admin'), async (req, res) => {
   const { storeId, name, icon } = req.body;
   if (!storeId || !name) return res.status(400).json({ error: 'بيانات القسم غير مكتملة' });
-  const result = await db.prepare('INSERT INTO categories (storeId, name, icon) VALUES (?, ?, ?) RETURNING id')
+  const result = await db.prepare('INSERT INTO categories ("storeId", name, icon) VALUES (?, ?, ?) RETURNING id')
     .run(storeId, name, icon || 'fa-folder');
   res.json({ id: result.rows[0].id });
 });

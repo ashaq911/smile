@@ -21,7 +21,7 @@ router.post('/', verifyToken, async (req, res) => {
   const { customer, phone, email, address, city, payment, notes } = req.body;
   if (!customer || !phone || !address) return res.status(400).json({ error: 'بيانات الطلب غير مكتملة' });
   const cartItems = await db.prepare(`
-    SELECT ci.*, p.price, p.title, p.shippingFee, p.storeId
+    SELECT ci.*, p.price, p.title, p.shippingFee, p."storeId"
     FROM cart_items ci JOIN products p ON ci.productId = p.id
     WHERE ci.userId = ?
   `).all(req.user.id);
@@ -34,12 +34,12 @@ router.post('/', verifyToken, async (req, res) => {
   const orderId = orderResult.rows[0].id;
   const storeAmounts = {};
   for (const item of cartItems) {
-    await db.prepare('INSERT INTO order_items (orderId, productId, title, price, quantity, shippingFee, storeId) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    await db.prepare('INSERT INTO order_items (orderId, productId, title, price, quantity, shippingFee, "storeId") VALUES (?, ?, ?, ?, ?, ?, ?)')
       .run(orderId, item.productid, item.title, item.price, item.quantity, item.shippingfee || 0, item.storeid);
     storeAmounts[item.storeid] = (storeAmounts[item.storeid] || 0) + item.price * item.quantity;
   }
   for (const [storeId, amount] of Object.entries(storeAmounts)) {
-    await db.prepare('INSERT INTO order_transfers (orderId, storeId, amount) VALUES (?, ?, ?) ON CONFLICT (orderId, storeId) DO NOTHING')
+    await db.prepare('INSERT INTO order_transfers (orderId, "storeId", amount) VALUES (?, ?, ?) ON CONFLICT (orderId, "storeId") DO NOTHING')
       .run(orderId, parseInt(storeId), amount);
   }
   await db.prepare('DELETE FROM cart_items WHERE userId = ?').run(req.user.id);
@@ -60,12 +60,12 @@ router.get('/transfers', verifyToken, async (req, res) => {
     SELECT ot.*, o.customer, o.total, s.name as storeName
     FROM order_transfers ot
     JOIN orders o ON ot.orderId = o.id
-    JOIN stores s ON ot.storeId = s.id
+    JOIN stores s ON ot."storeId" = s.id
   `;
   const params = [];
   const conditions = [];
   if (orderId) { conditions.push(`ot.orderId = $${params.length + 1}`); params.push(parseInt(orderId)); }
-  if (storeId) { conditions.push(`ot.storeId = $${params.length + 1}`); params.push(parseInt(storeId)); }
+  if (storeId) { conditions.push(`ot."storeId" = $${params.length + 1}`); params.push(parseInt(storeId)); }
   if (conditions.length > 0) sql += ' WHERE ' + conditions.join(' AND ');
   sql += ' ORDER BY ot.id DESC';
   const transfers = await db.prepare(sql).all(...params);
@@ -75,12 +75,12 @@ router.get('/transfers', verifyToken, async (req, res) => {
 router.post('/transfers', verifyToken, requireRole('admin'), async (req, res) => {
   const { orderId, storeId, amount, transferredToOwner } = req.body;
   if (!orderId || !storeId || amount === undefined) return res.status(400).json({ error: 'بيانات التحويل غير مكتملة' });
-  const existing = await db.prepare('SELECT id FROM order_transfers WHERE orderId = ? AND storeId = ?').get(orderId, storeId);
+  const existing = await db.prepare('SELECT id FROM order_transfers WHERE orderId = ? AND "storeId" = ?').get(orderId, storeId);
   if (existing) {
     await db.prepare('UPDATE order_transfers SET amount=?, transferredToOwner=? WHERE id=?').run(amount, transferredToOwner ? 1 : 0, existing.id);
     return res.json({ id: existing.id });
   }
-  const result = await db.prepare('INSERT INTO order_transfers (orderId, storeId, amount, transferredToOwner) VALUES (?, ?, ?, ?) RETURNING id')
+  const result = await db.prepare('INSERT INTO order_transfers (orderId, "storeId", amount, transferredToOwner) VALUES (?, ?, ?, ?) RETURNING id')
     .run(orderId, storeId, amount, transferredToOwner ? 1 : 0);
   res.json({ id: result.rows[0].id });
 });

@@ -31,7 +31,7 @@ router.post('/register', async (req, res) => {
   }
   try {
     const hash = bcrypt.hashSync(password, 8);
-    const result = await db.prepare('INSERT INTO users (username, password, role, name, storeId) VALUES (?, ?, ?, ?, ?) ON CONFLICT (username) DO NOTHING RETURNING id, username, role, name, storeId')
+    const result = await db.prepare('INSERT INTO users (username, password, role, name, "storeId") VALUES (?, ?, ?, ?, ?) ON CONFLICT (username) DO NOTHING RETURNING id, username, role, name, "storeId"')
       .run(username, hash, role || 'customer', name || '', storeId || null);
     const rows = result.rows;
     if (!rows || !rows[0]) return res.status(409).json({ error: 'اسم المستخدم موجود بالفعل' });
@@ -50,7 +50,7 @@ router.get('/me', verifyToken, (req, res) => {
 });
 
 router.get('/owners', verifyToken, requireRole('admin'), async (req, res) => {
-  const owners = await db.prepare("SELECT id, username, name, role, storeId FROM users WHERE role = 'store_owner'").all();
+  const owners = await db.prepare(`SELECT id, username, name, role, "storeId" FROM users WHERE role = 'store_owner'`).all();
   res.json(owners);
 });
 

@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
   const { storeId, subcategoryId, search } = req.query;
   let sql = 'SELECT * FROM products WHERE 1=1';
   const params = [];
-  if (storeId) { sql += ` AND storeId = $${params.length + 1}`; params.push(storeId); }
+  if (storeId) { sql += ` AND "storeId" = $${params.length + 1}`; params.push(storeId); }
   if (subcategoryId) { sql += ` AND subcategoryId = $${params.length + 1}`; params.push(subcategoryId); }
   if (search) { sql += ` AND (title ILIKE $${params.length + 1} OR description ILIKE $${params.length + 2})`; params.push(`%${search}%`, `%${search}%`); }
   sql += ' ORDER BY "createdAt" DESC';
@@ -25,7 +25,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', verifyToken, requireRole('admin'), async (req, res) => {
   const { title, description, price, oldPrice, icon, image, inStock, storeId, subcategoryId, shippingFee } = req.body;
   if (!title || !price || !storeId) return res.status(400).json({ error: 'بيانات المنتج غير مكتملة' });
-  const result = await db.prepare(`INSERT INTO products (title, description, price, oldPrice, icon, image, inStock, storeId, subcategoryId, shippingFee) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
+  const result = await db.prepare(`INSERT INTO products (title, description, price, oldPrice, icon, image, inStock, "storeId", subcategoryId, shippingFee) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
     .run(title, description || '', price, oldPrice || null, icon || 'fa-box', image || '', inStock ?? 1, storeId, subcategoryId || null, shippingFee || 0);
   res.json({ id: result.rows[0].id });
 });
@@ -33,7 +33,7 @@ router.post('/', verifyToken, requireRole('admin'), async (req, res) => {
 router.put('/:id', verifyToken, requireRole('admin'), async (req, res) => {
   const { title, description, price, oldPrice, icon, image, inStock, storeId, subcategoryId, shippingFee } = req.body;
   if (!title || !price) return res.status(400).json({ error: 'بيانات المنتج غير مكتملة' });
-  await db.prepare(`UPDATE products SET title=?, description=?, price=?, oldPrice=?, icon=?, image=?, inStock=?, storeId=?, subcategoryId=?, shippingFee=? WHERE id=?`)
+  await db.prepare(`UPDATE products SET title=?, description=?, price=?, oldPrice=?, icon=?, image=?, inStock=?, "storeId"=?, subcategoryId=?, shippingFee=? WHERE id=?`)
     .run(title, description || '', price, oldPrice || null, icon || 'fa-box', image || '', inStock ?? 1, storeId, subcategoryId || null, shippingFee || 0, req.params.id);
   res.json({ success: true });
 });
@@ -44,7 +44,7 @@ router.delete('/:id', verifyToken, requireRole('admin'), async (req, res) => {
 });
 
 router.get('/count/:storeId', async (req, res) => {
-  const count = await db.prepare('SELECT COUNT(*) as count FROM products WHERE storeId = ?').get(req.params.storeId);
+  const count = await db.prepare('SELECT COUNT(*) as count FROM products WHERE "storeId" = ?').get(req.params.storeId);
   res.json(count);
 });
 
