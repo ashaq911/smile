@@ -336,13 +336,24 @@ export async function confirmAdminPayment(transferId, orderId) {
 window.confirmAdminPayment = confirmAdminPayment;
 
 // ===== STORE OWNER PAY =====
-export function showPaymentModal(orderId, storeId) {
+export async function showPaymentModal(orderId, storeId) {
   var store = getStoreById(storeId);
   var modal = document.getElementById('storePaymentModal');
   if (!modal) return;
   document.getElementById('payOrderId').value = orderId;
   document.getElementById('payStoreId').value = storeId;
   document.getElementById('payBankInfo').textContent = (store && store.paymentInfo) || 'لم يتم إضافة معلومات الدفع';
+  try {
+    var tRes = await fetch('/api/orders/transfers?orderId=' + orderId + '&storeId=' + storeId, {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    if (tRes.ok) {
+      var transfers = await tRes.json();
+      if (transfers.length > 0) {
+        document.getElementById('payAmount').textContent = (transfers[0].amount || 0).toLocaleString();
+      }
+    }
+  } catch {}
   modal.style.display = 'flex';
 }
 window.showPaymentModal = showPaymentModal;

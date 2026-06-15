@@ -30,9 +30,12 @@ async function fetchOrdersForOwner(storeId) {
     const all = await res.json();
     cachedOrders = all.filter(o => o.items && o.items.some(i => i.storeId === storeId));
     for (const o of cachedOrders) {
-      fetch(`/api/orders/transfers?orderId=${o.id}&storeId=${storeId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      }).then(r => r.ok ? r.json() : []).then(t => { o._transfer = t; }).catch(() => {});
+      try {
+        const tRes = await fetch(`/api/orders/transfers?orderId=${o.id}&storeId=${storeId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (tRes.ok) o._transfer = (await tRes.json())[0];
+      } catch {}
     }
   } catch { cachedOrders = []; }
 }
@@ -259,25 +262,28 @@ function renderOwnerDashboard(storeId) {
       <h2 class="section-title">الطلبات المحولة</h2>
       ${!cachedOrders.length ? '<p style="text-align:center;padding:40px;color:var(--text-light);">لا توجد طلبات</p>' : [...cachedOrders].reverse().map(o => {
         const sLabels = { pending: 'قيد الانتظار', processing: 'قيد التجهيز', shipped: 'تم الشحن', delivered: 'تم التوصيل', cancelled: 'ملغي' };
-        const transfer = o._transfer;
+        const tr = o._transfer;
+        const revealed = tr && tr.customerInfoRevealed === 1;
         return `<div class="order-card">
           <div class="order-header">
             <div><span class="order-id">طلب #${o.id}</span></div>
             <span class="order-status status-${o.status}">${sLabels[o.status]||o.status}</span>
           </div>
-          <div style="padding:8px 12px;margin-bottom:12px;border-radius:8px;background:#fff3cd;display:flex;justify-content:space-between;align-items:center;font-size:14px;flex-wrap:wrap;gap:8px;">
-            <span><strong>المبلغ:</strong> ${(transfer?transfer.amount:0).toLocaleString()} د.ع</span>
-            <span>${transfer&&transfer.transferPaid?'✅ تم استلام المبلغ':transfer&&transfer.transferPaymentConfirmed?'🔄 بانتظار تأكيد المدير':'⏳ لم يتم الدفع'}</span>
+          ${!revealed ? `
+          <div style="padding:20px;text-align:center;">
+            <div style="font-size:28px;font-weight:800;color:var(--primary);margin-bottom:4px;">${(tr?tr.amount:0).toLocaleString()} د.ع</div>
+            <div style="font-size:14px;color:var(--text-light);margin-bottom:16px;"><i class="fas fa-lock"></i> تم تحويل طلب إليك، يرجى دفع المبلغ لعرض التفاصيل</div>
+            ${tr&&!tr.transferPaymentConfirmed ? `<button class="btn btn-primary" onclick="window.showPaymentModal(${o.id},${storeId})" style="width:100%;"><i class="fas fa-credit-card"></i> تأكيد الدفع</button>` : `<div style="padding:12px;background:#cce5ff;border-radius:10px;font-size:14px;"><i class="fas fa-clock"></i> تم إرسال إشعار الدفع، بانتظار تأكيد المدير</div>`}
           </div>
+          ` : `
           <div style="padding:12px;background:var(--bg);border-radius:10px;font-size:14px;margin-bottom:8px;">
-            ${transfer&&transfer.customerInfoRevealed ? `
-              <div><strong>العميل:</strong> ${o.customer}</div>
-              <div><strong>الهاتف:</strong> ${o.phone||'—'}</div>
-              <div><strong>العنوان:</strong> ${o.address}</div>
-            ` : '<div style="color:var(--text-light);"><i class="fas fa-lock"></i> معلومات العميل مخفية حتى يتم الدفع</div>'}
+            <div><strong>العميل:</strong> ${o.customer}</div>
+            <div><strong>الهاتف:</strong> ${o.phone||'—'}</div>
+            <div><strong>العنوان:</strong> ${o.address}</div>
           </div>
-          <div>${o.items.filter(i=>i.storeId===storeId).map(i=>`<div class="order-item"><span>${i.title} × ${i.quantity}</span><span>${(i.price*i.quantity).toLocaleString()} د.ع</span></div>`).join('')}</div>
-          ${transfer&&!transfer.transferPaid&&!transfer.transferPaymentConfirmed?`<button class="btn btn-primary" onclick="window.showPaymentModal(${o.id},${storeId})" style="width:100%;margin-top:8px;"><i class="fas fa-credit-card"></i> تأكيد الدفع</button>`:''}
+          ${o.items.filter(i=>i.storeId===storeId).map(i=>`<div class="order-item"><span>${i.title} × ${i.quantity}</span><span>${(i.price*i.quantity).toLocaleString()} د.ع</span></div>`).join('')}
+          <div style="margin-top:8px;padding:8px;background:#d4edda;border-radius:8px;text-align:center;font-size:14px;"><i class="fas fa-check-circle"></i> تم تأكيد الدفع — معلومات الزبون متاحة</div>
+          `}
         </div>`;
       }).join('')}
     </div>`;
