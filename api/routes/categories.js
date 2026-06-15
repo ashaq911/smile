@@ -46,7 +46,7 @@ router.get('/subcategories', async (req, res) => {
   const { categoryId } = req.query;
   let subs;
   if (categoryId) {
-    subs = await db.prepare('SELECT * FROM subcategories WHERE categoryId = ? ORDER BY name').all(categoryId);
+    subs = await db.prepare('SELECT * FROM subcategories WHERE "categoryId" = ? ORDER BY name').all(categoryId);
   } else {
     subs = await db.prepare('SELECT * FROM subcategories ORDER BY name').all();
   }
@@ -59,13 +59,13 @@ router.post('/subcategories', verifyToken, requireRole('admin', 'store_owner'), 
   const cat = await db.prepare('SELECT * FROM categories WHERE id = ?').get(categoryId);
   if (!cat) return res.status(404).json({ error: 'القسم غير موجود' });
   if (req.user.role === 'store_owner' && req.user.storeId !== cat.storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
-  const result = await db.prepare('INSERT INTO subcategories (categoryId, name) VALUES (?, ?) RETURNING id').run(categoryId, name);
+  const result = await db.prepare('INSERT INTO subcategories ("categoryId", name) VALUES (?, ?) RETURNING id').run(categoryId, name);
   res.json({ id: result.rows[0].id });
 });
 
 router.put('/subcategories/:id', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
   const { name } = req.body;
-  const sub = await db.prepare('SELECT s.*, c."storeId" FROM subcategories s JOIN categories c ON c.id = s.categoryId WHERE s.id = ?').get(req.params.id);
+  const sub = await db.prepare('SELECT s.*, c."storeId" FROM subcategories s JOIN categories c ON c.id = s."categoryId" WHERE s.id = ?').get(req.params.id);
   if (!sub) return res.status(404).json({ error: 'التفرع غير موجود' });
   if (req.user.role === 'store_owner' && req.user.storeId !== sub.storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
   await db.prepare('UPDATE subcategories SET name=? WHERE id=?').run(name, req.params.id);
@@ -73,7 +73,7 @@ router.put('/subcategories/:id', verifyToken, requireRole('admin', 'store_owner'
 });
 
 router.delete('/subcategories/:id', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
-  const sub = await db.prepare('SELECT s.*, c."storeId" FROM subcategories s JOIN categories c ON c.id = s.categoryId WHERE s.id = ?').get(req.params.id);
+  const sub = await db.prepare('SELECT s.*, c."storeId" FROM subcategories s JOIN categories c ON c.id = s."categoryId" WHERE s.id = ?').get(req.params.id);
   if (!sub) return res.status(404).json({ error: 'التفرع غير موجود' });
   if (req.user.role === 'store_owner' && req.user.storeId !== sub.storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
   await db.prepare('DELETE FROM subcategories WHERE id = ?').run(req.params.id);
@@ -87,7 +87,7 @@ router.post('/cleanup', verifyToken, requireRole('admin'), async (req, res) => {
   for (const cat of cats) {
     const isClothing = clothingNames.some(n => cat.name.includes(n));
     if (!isClothing) {
-      const subs = await db.prepare('SELECT id FROM subcategories WHERE categoryId = ?').all(cat.id);
+      const subs = await db.prepare('SELECT id FROM subcategories WHERE "categoryId" = ?').all(cat.id);
       for (const sub of subs) {
         await db.prepare('UPDATE products SET "subcategoryId" = NULL WHERE "subcategoryId" = ?').run(sub.id);
         await db.prepare('DELETE FROM subcategories WHERE id = ?').run(sub.id);

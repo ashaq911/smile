@@ -9,12 +9,12 @@ router.get('/', verifyToken, async (req, res) => {
   if (req.user.role === 'admin' || req.user.role === 'store_owner') {
     orders = await db.prepare('SELECT * FROM orders ORDER BY "createdAt" DESC').all();
   } else {
-    orders = await db.prepare('SELECT * FROM orders WHERE userId = ? ORDER BY "createdAt" DESC').all(req.user.id);
+    orders = await db.prepare('SELECT * FROM orders WHERE "userId" = ? ORDER BY "createdAt" DESC').all(req.user.id);
   }
   if (orders.length) {
     const ids = orders.map(o => o.id);
     const ph = ids.map((_, i) => `$${i + 1}`);
-    const items = await db.prepare(`SELECT * FROM order_items WHERE orderId IN (${ph.join(',')})`).all(...ids);
+    const items = await db.prepare(`SELECT * FROM order_items WHERE "orderId" IN (${ph.join(',')})`).all(...ids);
     const itemMap = {};
     for (const item of items) {
       const oid = item.orderid || item.orderId || item["orderId"];
@@ -32,28 +32,28 @@ router.post('/', verifyToken, async (req, res) => {
   const { customer, phone, email, address, city, payment, notes } = req.body;
   if (!customer || !phone || !address) return res.status(400).json({ error: 'بيانات الطلب غير مكتملة' });
   const cartItems = await db.prepare(`
-    SELECT ci.*, p.price, p.title, p.shippingFee, p."storeId"
-    FROM cart_items ci JOIN products p ON ci.productId = p.id
-    WHERE ci.userId = ?
+    SELECT ci.*, p.price, p.title, p."shippingFee", p."storeId"
+    FROM cart_items ci JOIN products p ON ci."productId" = p.id
+    WHERE ci."userId" = ?
   `).all(req.user.id);
   if (cartItems.length === 0) return res.status(400).json({ error: 'السلة فارغة' });
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = cartItems.reduce((sum, item) => sum + (item.shippingfee || 0) * item.quantity, 0);
   const total = subtotal + shipping;
-  const orderResult = await db.prepare(`INSERT INTO orders (userId, customer, phone, email, address, city, payment, subtotal, shipping, total, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
+  const orderResult = await db.prepare(`INSERT INTO orders ("userId", customer, phone, email, address, city, payment, subtotal, shipping, total, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
     .run(req.user.id, customer, phone, email || '', address, city || '', payment || 'cod', subtotal, shipping, total, notes || '');
   const orderId = orderResult.rows[0].id;
   const storeAmounts = {};
   for (const item of cartItems) {
-    await db.prepare('INSERT INTO order_items (orderId, productId, title, price, quantity, shippingFee, "storeId") VALUES (?, ?, ?, ?, ?, ?, ?)')
+    await db.prepare('INSERT INTO order_items ("orderId", "productId", title, price, quantity, "shippingFee", "storeId") VALUES (?, ?, ?, ?, ?, ?, ?)')
       .run(orderId, item.productid, item.title, item.price, item.quantity, item.shippingfee || 0, item.storeid);
     storeAmounts[item.storeid] = (storeAmounts[item.storeid] || 0) + item.price * item.quantity;
   }
   for (const [storeId, amount] of Object.entries(storeAmounts)) {
-    await db.prepare('INSERT INTO order_transfers (orderId, "storeId", amount) VALUES (?, ?, ?) ON CONFLICT (orderId, "storeId") DO NOTHING')
+    await db.prepare('INSERT INTO order_transfers ("orderId", "storeId", amount) VALUES (?, ?, ?) ON CONFLICT ("orderId", "storeId") DO NOTHING')
       .run(orderId, parseInt(storeId), amount);
   }
-  await db.prepare('DELETE FROM cart_items WHERE userId = ?').run(req.user.id);
+  await db.prepare('DELETE FROM cart_items WHERE "userId" = ?').run(req.user.id);
   res.json({ id: orderId, total });
 });
 
@@ -80,7 +80,7 @@ router.get('/transfers', verifyToken, async (req, res) => {
   `;
   const params = [];
   const conditions = [];
-  if (orderId) { conditions.push(`ot.orderId = $${params.length + 1}`); params.push(parseInt(orderId)); }
+  if (orderId) { conditions.push(`ot."orderId" = $${params.length + 1}`); params.push(parseInt(orderId)); }
   if (storeId) { conditions.push(`ot."storeId" = $${params.length + 1}`); params.push(parseInt(storeId)); }
   if (conditions.length > 0) sql += ' WHERE ' + conditions.join(' AND ');
   sql += ' ORDER BY ot.id DESC';
