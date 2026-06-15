@@ -110,6 +110,7 @@ async function initApp() {
   registerPage('admin', () => { initAdminDashboard(); });
   registerPage('orders', () => { renderOrders(); });
   registerPage('cart', () => { renderCart(); });
+  registerPage('checkout', () => { renderCheckoutSummary(); });
   initRouter();
 }
 

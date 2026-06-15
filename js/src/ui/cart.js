@@ -87,7 +87,7 @@ export function renderCart() {
         <span>الإجمالي</span>
         <span>${(subtotal + shippingFee).toLocaleString()} د.ع</span>
       </div>
-      <a href="checkout.html" class="btn btn-primary" style="width:100%;text-align:center;margin-top:16px;">إتمام الطلب</a>
+      <a href="/pages/checkout.html" class="btn btn-primary" style="width:100%;text-align:center;margin-top:16px;">إتمام الطلب</a>
       <button class="btn btn-outline" style="width:100%;text-align:center;margin-top:8px;" onclick="window.cartClear();window.renderCart();">تفريغ السلة</button>
     `;
   }

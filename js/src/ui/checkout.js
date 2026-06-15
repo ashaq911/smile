@@ -10,17 +10,12 @@ export function renderCheckoutSummary() {
   const cart = getCart();
   if (cart.length === 0) { container.innerHTML = '<p>السلة فارغة</p>'; return; }
   const fmt = n => n.toLocaleString();
-  const subtotal = getCartTotal();
-  const shippingFee = cart.reduce((s, item) => {
-    const p = getProductById(item.id);
-    return Math.max(s, (p && p.shippingFee) || 0);
-  }, 0);
+  const subtotal = cart.reduce((s, item) => s + item.price * item.quantity, 0);
+  const shippingFee = cart.reduce((s, item) => Math.max(s, (item.shippingFee || 0)), 0);
   container.innerHTML = `
     <h3>ملخص الطلب</h3>
     ${cart.map(item => {
-      const p = getProductById(item.id);
-      if (!p) return '';
-      return `<div class="checkout-item" style="flex-wrap:wrap;"><span>${p.title} × ${item.quantity}</span><span style="text-align:left;">${fmt(p.price * item.quantity)} د.ع</span></div>`;
+      return `<div class="checkout-item" style="flex-wrap:wrap;"><span>${item.title} × ${item.quantity}</span><span style="text-align:left;">${fmt(item.price * item.quantity)} د.ع</span></div>`;
     }).join('')}
     <div class="checkout-item" style="margin-top:12px;padding-top:12px;border-top:2px solid var(--border);"><span>المجموع الفرعي</span><span>${fmt(subtotal)} د.ع</span></div>
     <div class="checkout-item"><span>رسوم الشحن</span><span>${shippingFee > 0 ? fmt(shippingFee) + ' د.ع' : 'لا توجد'}</span></div>
