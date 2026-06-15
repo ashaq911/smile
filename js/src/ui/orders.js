@@ -33,8 +33,11 @@ export async function renderOrders() {
   container.innerHTML = [...orders].reverse().map(order => {
     const statusLabels = { pending: 'قيد الانتظار', processing: 'قيد التجهيز', shipped: 'تم الشحن', delivered: 'تم التوصيل', cancelled: 'ملغي' };
     const orderShipping = order.items.reduce((s, i) => Math.max(s, i.shippingFee || 0), 0);
+    const transferred = order.transfers && order.transfers.some(t => t.transferredToOwner === 1);
+    const deletable = !transferred && order.status !== 'cancelled';
     return `<div class="order-card" style="position:relative;">
-      ${order.status === 'delivered' ? `<button class="btn btn-danger btn-sm" onclick="window.deleteCustomerOrder(${order.id})" style="position:absolute;top:12px;left:12px;" title="حذف"><i class="fas fa-trash"></i></button>` : ''}
+      ${transferred ? '<div style="position:absolute;top:12px;left:12px;background:var(--warning);color:#333;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;"><i class="fas fa-exchange-alt"></i> تم التحويل للمتجر</div>' : ''}
+      ${deletable ? `<button class="btn btn-danger btn-sm" onclick="window.deleteCustomerOrder(${order.id})" style="position:absolute;bottom:12px;left:12px;" title="حذف الطلب"><i class="fas fa-trash"></i> حذف</button>` : ''}
       <div class="order-header"><div><span class="order-id">طلب #${order.id}</span><span style="color:var(--text-light);font-size:13px;margin-right:12px;">${order.createdAt || ''}</span></div><span class="order-status status-${order.status}">${statusLabels[order.status] || order.status}</span></div>
       <div class="order-items">${order.items.map(item => {
         return `<div class="order-item"><span>${item.title} × ${item.quantity}</span><span>${(item.price * item.quantity).toLocaleString()} د.ع</span></div>`;
@@ -53,9 +56,9 @@ export async function deleteCustomerOrder(orderId) {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
     });
-    if (!res.ok) throw new Error();
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'فشل حذف الطلب'); }
     showToast('تم حذف الطلب');
     renderOrders();
-  } catch { showToast('فشل حذف الطلب'); }
+  } catch (e) { showToast(e.message); }
 }
 window.deleteCustomerOrder = deleteCustomerOrder;

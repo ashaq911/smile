@@ -15,14 +15,22 @@ router.get('/', verifyToken, async (req, res) => {
     const ids = orders.map(o => o.id);
     const ph = ids.map((_, i) => `$${i + 1}`);
     const items = await db.prepare(`SELECT * FROM order_items WHERE "orderId" IN (${ph.join(',')})`).all(...ids);
+    const transfers = await db.prepare(`SELECT * FROM order_transfers WHERE "orderId" IN (${ph.join(',')})`).all(...ids);
     const itemMap = {};
     for (const item of items) {
       const oid = item.orderId;
       if (!itemMap[oid]) itemMap[oid] = [];
       itemMap[oid].push(item);
     }
+    const transferMap = {};
+    for (const t of transfers) {
+      const oid = t.orderId;
+      if (!transferMap[oid]) transferMap[oid] = [];
+      transferMap[oid].push(t);
+    }
     for (const order of orders) {
       order.items = itemMap[order.id] || [];
+      order.transfers = transferMap[order.id] || [];
     }
   }
   res.json(orders);
@@ -122,7 +130,12 @@ router.put('/transfers/:id', verifyToken, requireRole('admin', 'store_owner'), a
   res.json({ success: true });
 });
 
-router.delete('/:id', verifyToken, requireRole('admin'), async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
+  const order = await db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+  if (!order) return res.status(404).json({ error: 'الطلب غير موجود' });
+  if (req.user.role === 'customer' && order.userId !== req.user.id) return res.status(403).json({ error: 'لا تصلاحية لك لهذا الطلب' });
+  const transfers = await db.prepare('SELECT * FROM order_transfers WHERE "orderId" = ? AND "transferredToOwner" = 1').all(req.params.id);
+  if (transfers.length > 0) return res.status(400).json({ error: 'تم تحويل طلبك إلى صاحب المتجر، لا يمكن حذفه' });
   await db.prepare('DELETE FROM orders WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });
