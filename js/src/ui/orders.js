@@ -12,7 +12,7 @@ export async function renderOrders() {
     return;
   }
   try {
-    const res = await fetch('/api/orders', {
+    const res = await fetch('/api/orders?_=' + Date.now(), {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
     });
     if (res.ok) allOrders = await res.json();
@@ -53,7 +53,8 @@ export async function deleteCustomerOrder(orderId) {
     });
     if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'فشل حذف الطلب'); }
     showToast('تم حذف الطلب');
-    renderOrders();
+    allOrders = []; // clear cache so renderOrders fetches fresh
+    await renderOrders();
   } catch (e) { showToast(e.message); }
 }
 window.deleteCustomerOrder = deleteCustomerOrder;
