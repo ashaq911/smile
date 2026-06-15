@@ -65,9 +65,13 @@ window.initAdminDashboard = initAdminDashboard;
 function renderAdminDashboard() {
   const container = document.getElementById('adminContent');
   if (!container) return;
-  const totalOrders = cachedOrders.length;
-  const totalRevenue = cachedOrders.reduce((s, o) => s + (o.total || 0), 0);
-  const pendingOrders = cachedOrders.filter(o => o.status === 'pending').length;
+  const visibleOrdersList = cachedOrders.filter(o => {
+    const ts = cachedTransfers.filter(t => t.orderId === o.id);
+    return ts.length === 0 || ts.some(t => t.customerInfoRevealed !== 1);
+  });
+  const totalOrders = visibleOrdersList.length;
+  const totalRevenue = visibleOrdersList.reduce((s, o) => s + (o.total || 0), 0);
+  const pendingOrders = visibleOrdersList.filter(o => o.status === 'pending').length;
   const stores = getStores();
   container.innerHTML = `
     <div class="admin-stats">
@@ -84,9 +88,17 @@ function renderAdminDashboard() {
     </div>
     <div class="admin-tab-content" id="adminTabOrders">
       <h2 class="section-title">جميع الطلبات</h2>
-      ${cachedOrders.length === 0 ? '<p style="text-align:center;padding:40px;color:var(--text-light);">لا توجد طلبات</p>' : [...cachedOrders].reverse().map(o => {
+      ${(()=>{
+        // Filter orders: hide those where ALL transfers have customerInfoRevealed = 1
+        const visibleOrders = [...cachedOrders].reverse().filter(o => {
+          const orderTransfers = cachedTransfers.filter(t => t.orderId === o.id);
+          if (orderTransfers.length === 0) return true;
+          return orderTransfers.some(t => t.customerInfoRevealed !== 1);
+        });
+        if (visibleOrders.length === 0) return '<p style="text-align:center;padding:40px;color:var(--text-light);">لا توجد طلبات</p>';
+        return visibleOrders.map(o => {
         const sLabels = { pending: 'قيد الانتظار', processing: 'قيد التجهيز', shipped: 'تم الشحن', delivered: 'تم التوصيل', cancelled: 'ملغي' };
-        const transfer = cachedTransfers.find(t => t.orderId === o.id);
+        const orderTransfers = cachedTransfers.filter(t => t.orderId === o.id);
         return `<div class="order-card">
           <div class="order-header">
             <div><span class="order-id">طلب #${o.id}</span><span style="color:var(--text-light);font-size:13px;margin-right:12px;"><i class="fas fa-calendar"></i> ${o.createdAt || ''}</span></div>
@@ -99,12 +111,12 @@ function renderAdminDashboard() {
             <div><strong>الهاتف:</strong> ${o.phone || '—'}</div>
             <div><strong>العنوان:</strong> ${o.address}</div>
           </div>
-          ${transfer ? `
-          <div style="padding:8px 12px;margin-bottom:12px;border-radius:8px;background:${transfer.transferPaid?'#d4edda':transfer.transferPaymentConfirmed?'#cce5ff':'#fff3cd'};display:flex;justify-content:space-between;align-items:center;font-size:14px;flex-wrap:wrap;gap:8px;">
-            <span><strong>التحويل:</strong> ${transfer.transferPaid?'✅ تم الدفع':transfer.transferPaymentConfirmed?'🔄 بانتظار التأكيد':'⏳ في انتظار الدفع'}</span>
+          ${orderTransfers.map(transfer => `
+          <div style="padding:8px 12px;margin-bottom:12px;border-radius:8px;background:${transfer.customerInfoRevealed?'#d4edda':transfer.transferPaymentConfirmed?'#cce5ff':'#fff3cd'};display:flex;justify-content:space-between;align-items:center;font-size:14px;flex-wrap:wrap;gap:8px;">
+            <span><strong>تحويل المتجر ${getStoreById(transfer.storeId)?.name||'#'+transfer.storeId}:</strong> ${transfer.customerInfoRevealed?'✅ تم الكشف عن المعلومات':transfer.transferPaymentConfirmed?'🔄 بانتظار الموافقة':'⏳ في انتظار الدفع'}</span>
             <span>${(transfer.amount||0).toLocaleString()} د.ع</span>
-            ${transfer.transferPaymentConfirmed&&!transfer.transferPaid?`<button class="btn btn-success btn-sm" onclick="confirmAdminPayment(${transfer.id},${o.id})"><i class="fas fa-check"></i> تأكيد الدفع</button>`:''}
-          </div>` : ''}
+            ${transfer.transferPaymentConfirmed&&!transfer.customerInfoRevealed?`<button class="btn btn-success btn-sm" onclick="confirmAdminReveal(${transfer.id},${o.id})"><i class="fas fa-eye"></i> الموافقة على اظهار المعلومات</button>`:''}
+          </div>`).join('')}
           <div style="margin-bottom:8px;">${(()=>{
             const g={}; o.items.forEach(i=>{const sid=i.storeId||'unknown'; if(!g[sid])g[sid]=[]; g[sid].push(i);});
             return Object.entries(g).map(([sid,items])=>{
@@ -123,7 +135,8 @@ function renderAdminDashboard() {
           })()}</div>
           <div class="order-total"><span>الإجمالي</span><span>${o.total.toLocaleString()} د.ع</span></div>
         </div>`;
-      }).join('')}
+      }).join('');
+      })()}
     </div>
     <div class="admin-tab-content" id="adminTabProducts" style="display:none;">
       <h2 class="section-title">جميع المنتجات</h2>

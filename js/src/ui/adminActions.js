@@ -321,19 +321,19 @@ window.confirmTransfer = confirmTransfer;
 export function closeTransferModal() { var m = document.getElementById('transferModal'); if (m) m.style.display = 'none'; }
 window.closeTransferModal = closeTransferModal;
 
-export async function confirmAdminPayment(transferId, orderId) {
-  if (!confirm('تأكيد استلام المبلغ؟ سيتم كشف معلومات الزبون')) return;
+export async function confirmAdminReveal(transferId, orderId) {
+  if (!confirm('الموافقة على إظهار معلومات الزبون لصاحب المتجر؟')) return;
   try {
     var res = await fetch('/api/orders/transfers/' + transferId, {
       method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
-      body: JSON.stringify({ transferPaid: true, customerInfoRevealed: true })
+      body: JSON.stringify({ customerInfoRevealed: true, transferPaid: true })
     });
     if (!res.ok) throw new Error();
-    showToast('تم تأكيد الدفع!');
-  } catch { showToast('فشل تأكيد الدفع'); }
+    showToast('تمت الموافقة - المعلومات متاحة لصاحب المتجر');
+  } catch { showToast('فشل العملية'); }
   initAdminDashboard();
 }
-window.confirmAdminPayment = confirmAdminPayment;
+window.confirmAdminReveal = confirmAdminReveal;
 
 // ===== STORE OWNER PAY =====
 export async function showPaymentModal(orderId, storeId) {
