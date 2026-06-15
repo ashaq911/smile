@@ -26,9 +26,10 @@ router.post('/', verifyToken, requireRole('admin', 'store_owner'), async (req, r
   const { title, description, price, oldPrice, icon, image, inStock, storeId, subcategoryId, shippingFee } = req.body;
   if (!title || !price || !storeId) return res.status(400).json({ error: 'بيانات المنتج غير مكتملة' });
   if (req.user.role === 'store_owner' && req.user.storeId !== storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
+  const stockInt = inStock ? 1 : 0;
   const result = await db.prepare('SELECT 1 AS warmup').get().then(() => {
     return db.prepare(`INSERT INTO products (title, description, price, "oldPrice", icon, image, "inStock", "storeId", "subcategoryId", "shippingFee") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
-      .run(title, description || '', price, oldPrice || null, icon || 'fa-box', image || '', inStock ?? 1, storeId, subcategoryId || null, shippingFee || 0);
+      .run(title, description || '', price, oldPrice || null, icon || 'fa-box', image || '', stockInt, storeId, subcategoryId || null, shippingFee || 0);
   });
   res.json({ id: result.rows[0].id });
 });
@@ -37,8 +38,9 @@ router.put('/:id', verifyToken, requireRole('admin', 'store_owner'), async (req,
   const { title, description, price, oldPrice, icon, image, inStock, storeId, subcategoryId, shippingFee } = req.body;
   if (!title || !price) return res.status(400).json({ error: 'بيانات المنتج غير مكتملة' });
   if (req.user.role === 'store_owner' && req.user.storeId !== storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
+  const stockIntUpd = inStock ? 1 : 0;
   await db.prepare(`UPDATE products SET title=?, description=?, price=?, "oldPrice"=?, icon=?, image=?, "inStock"=?, "storeId"=?, "subcategoryId"=?, "shippingFee"=? WHERE id=?`)
-    .run(title, description || '', price, oldPrice || null, icon || 'fa-box', image || '', inStock ?? 1, storeId, subcategoryId || null, shippingFee || 0, req.params.id);
+    .run(title, description || '', price, oldPrice || null, icon || 'fa-box', image || '', stockIntUpd, storeId, subcategoryId || null, shippingFee || 0, req.params.id);
   res.json({ success: true });
 });
 
