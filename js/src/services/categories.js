@@ -23,12 +23,16 @@ export async function initCategories() {
   }
 }
 
-async function reloadCats() {
+export async function reloadCategories() {
   categories = await apiGet('/categories');
+  localStorage.setItem('cache_categories', JSON.stringify(categories));
+  dataChanged();
 }
 
-async function reloadSubs() {
+export async function reloadSubcategories() {
   subcategories = await apiGet('/categories/subcategories');
+  localStorage.setItem('cache_subcategories', JSON.stringify(subcategories));
+  dataChanged();
 }
 
 export function getCategories() { return categories; }
@@ -52,33 +56,33 @@ export function getSubcategoryById(id) {
 
 export async function addCategory(storeId, name, icon) {
   const result = await apiPost('/categories', { storeId, name, icon });
-  await reloadCats();
+  await reloadCategories();
   return categories.find(c => c.id === result.id);
 }
 
 export async function updateCategory(id, data) {
   await apiPut(`/categories/${id}`, data);
-  await reloadCats();
+  await reloadCategories();
 }
 
 export async function deleteCategory(id) {
   await apiDelete(`/categories/${id}`);
-  categories = categories.filter(c => c.id !== id);
-  subcategories = subcategories.filter(s => s.categoryId !== id);
+  await reloadCategories();
+  await reloadSubcategories();
 }
 
 export async function addSubcategory(categoryId, name) {
   const result = await apiPost('/categories/subcategories', { categoryId, name });
-  await reloadSubs();
+  await reloadSubcategories();
   return subcategories.find(s => s.id === result.id);
 }
 
 export async function updateSubcategory(id, data) {
   await apiPut(`/categories/subcategories/${id}`, data);
-  await reloadSubs();
+  await reloadSubcategories();
 }
 
 export async function deleteSubcategory(id) {
   await apiDelete(`/categories/subcategories/${id}`);
-  subcategories = subcategories.filter(s => s.id !== id);
+  await reloadSubcategories();
 }

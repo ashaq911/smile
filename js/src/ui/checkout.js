@@ -1,6 +1,7 @@
 import { getCart, getCartTotal, clearCart } from '../services/cart.js';
 import { getAddresses, saveAddress } from '../services/addresses.js';
 import { showToast } from './toast.js';
+import { invalidateOrders } from './orders.js';
 
 export function renderCheckoutSummary() {
   const container = document.getElementById('checkoutSummary');
@@ -78,6 +79,7 @@ export async function submitOrder(event) {
       throw new Error(err.error || 'فشل تقديم الطلب');
     }
     await clearCart();
+    invalidateOrders();
     routerNavigate('orders');
   } catch (e) {
     showToast(e.message);

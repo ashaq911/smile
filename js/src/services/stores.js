@@ -17,6 +17,8 @@ export async function initStores() {
 
 export async function reloadStores() {
   stores = await apiGet('/stores');
+  localStorage.setItem('cache_stores', JSON.stringify(stores));
+  dataChanged();
 }
 
 export function getStores() {
@@ -40,5 +42,5 @@ export async function updateStore(id, data) {
 
 export async function deleteStore(id) {
   await apiDelete(`/stores/${id}`);
-  stores = stores.filter(s => s.id !== id);
+  await reloadStores();
 }

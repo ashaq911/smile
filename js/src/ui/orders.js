@@ -3,8 +3,6 @@ import { showToast } from './toast.js';
 
 let allOrders = [];
 
-let ordersLoaded = false;
-
 export async function renderOrders() {
   const container = document.getElementById('ordersContainer');
   if (!container) return;
@@ -13,16 +11,13 @@ export async function renderOrders() {
     container.innerHTML = '<div class="cart-empty"><i class="fas fa-user-lock"></i><h2>سجل الدخول لمشاهدة طلباتك</h2><p>قم بتسجيل الدخول أو إنشاء حساب لمتابعة طلباتك</p><div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;"><button class="btn btn-primary" onclick="window.authShowLogin()">تسجيل الدخول</button><button class="btn btn-outline" onclick="window.authShowRegister()">إنشاء حساب</button></div></div>';
     return;
   }
-  if (!ordersLoaded) {
-    try {
-      const res = await fetch('/api/orders', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-      });
-      if (res.ok) allOrders = await res.json();
-      else allOrders = [];
-    } catch { allOrders = []; }
-    ordersLoaded = true;
-  }
+  try {
+    const res = await fetch('/api/orders', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+    });
+    if (res.ok) allOrders = await res.json();
+    else allOrders = [];
+  } catch { allOrders = []; }
 
   let orders = allOrders;
   if (user.role === 'customer') orders = allOrders.filter(o => o.userId === user.id);
@@ -46,6 +41,8 @@ export async function renderOrders() {
     </div>`;
   }).join('');
 }
+
+export function invalidateOrders() { allOrders = []; }
 
 export async function deleteCustomerOrder(orderId) {
   if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;

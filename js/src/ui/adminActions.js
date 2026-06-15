@@ -1,6 +1,6 @@
 import { addStore, updateStore, deleteStore, getStoreById, getStores } from '../services/stores.js';
 import { addCategory, updateCategory, deleteCategory, getCategoryById, getCategoriesByStore, addSubcategory, updateSubcategory, deleteSubcategory, getSubcategoryById, getSubcategoriesByCategory } from '../services/categories.js';
-import { addProduct, deleteProduct, getProducts, getSubcategoryProductCount } from '../services/products.js';
+import { addProduct, deleteProduct, reloadProducts, getProducts, getSubcategoryProductCount } from '../services/products.js';
 import { addStoreOwner, deleteAuthUser, getCurrentUser } from '../services/auth.js';
 import { showToast } from './toast.js';
 import { initAdminDashboard } from './admin.js';
@@ -197,6 +197,7 @@ export async function deleteAdminSubcategory(id) {
       });
     });
     await deleteSubcategory(id);
+    await reloadProducts();
     showToast('تم حذف التفرع');
   } catch (e) { showToast(e.message); }
   initAdminDashboard();
@@ -262,7 +263,7 @@ window.saveProduct = async function() {
   } catch(e) { showToast(e.message || 'فشل حفظ المنتج'); }
   if (btn) { btn.disabled = false; btn.innerHTML = 'حفظ'; }
   document.getElementById('productModal').style.display = 'none';
-  try { var m = await import('../services/products.js'); await m.initProducts(); } catch(e) {}
+  try { await reloadProducts(); } catch(e) {}
   initAdminDashboard();
 };
 window.closeProductModal = function() { document.getElementById('productModal').style.display = 'none'; };

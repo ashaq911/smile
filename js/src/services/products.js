@@ -15,8 +15,10 @@ export async function initProducts() {
   }
 }
 
-async function reload() {
+export async function reloadProducts() {
   products = await apiGet('/products');
+  localStorage.setItem('cache_products', JSON.stringify(products));
+  dataChanged();
 }
 
 export function getProducts() {
@@ -58,16 +60,16 @@ export function getCategoryProductCount(categoryId, subcategories) {
 
 export async function addProduct(data) {
   const result = await apiPost('/products', data);
-  await reload();
+  await reloadProducts();
   return products.find(p => p.id === result.id);
 }
 
 export async function updateProduct(id, data) {
   await apiPut(`/products/${id}`, data);
-  await reload();
+  await reloadProducts();
 }
 
 export async function deleteProduct(id) {
   await apiDelete(`/products/${id}`);
-  products = products.filter(p => p.id !== id);
+  await reloadProducts();
 }
