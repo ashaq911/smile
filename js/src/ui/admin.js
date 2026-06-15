@@ -111,11 +111,11 @@ function renderAdminDashboard() {
               const st=getStoreById(parseInt(sid)); const sName=st?st.name:'غير معروف';
               const sTotal=items.reduce((s,i)=>s+i.price*i.quantity,0);
               const sShip=items.reduce((s,i)=>Math.max(s,i.shippingFee||0),0);
-              const ownerStore=getSubcategoryById(items[0]?.subcategoryId);
+              const storeTransfer = cachedTransfers.find(t => t.orderId === o.id && t.storeId === parseInt(sid));
               return `<div style="margin-bottom:8px;">
                 <div style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">
                   <span><i class="fas ${st?st.icon:'fa-store'}"></i> ${sName}</span>
-                  ${!transfer?`<button class="btn btn-primary btn-sm" onclick="showTransferModal(${o.id},${sid},${sTotal+sShip})" style="font-size:11px;"><i class="fas fa-exchange-alt"></i> تحويل</button>`:''}
+                  ${!storeTransfer?`<button class="btn btn-primary btn-sm" onclick="showTransferModal(${o.id},${sid},${sTotal+sShip})" style="font-size:11px;"><i class="fas fa-exchange-alt"></i> تحويل</button>`:''}
                 </div>
                 ${items.map(i=>`<div class="order-item"><span>${i.title} × ${i.quantity}</span><span>${(i.price*i.quantity).toLocaleString()} د.ع</span></div>`).join('')}
               </div>`;

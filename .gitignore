@@ -9,3 +9,5 @@ backend/server.log
 backend/server.err
 backend/body.json
 .env
+
+.vercel
