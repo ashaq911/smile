@@ -1,4 +1,4 @@
-import { getCurrentUser } from '../services/auth.js';
+import { getCurrentUser, getStoreOwners } from '../services/auth.js';
 import { getStores, getStoreById } from '../services/stores.js';
 import { getCategories, getSubcategories, getCategoryById, getCategoriesByStore, getSubcategoriesByCategory, getSubcategoryById } from '../services/categories.js';
 import { getProducts, getProductById, getProductsByStore, getStoreProductCount, getCategoryProductCount } from '../services/products.js';
@@ -6,17 +6,20 @@ import { showToast } from './toast.js';
 
 let cachedOrders = [];
 let cachedTransfers = [];
+let cachedOwners = [];
 
 async function fetchAdminData() {
   try {
     const token = localStorage.getItem('auth_token');
-    const [orders, transfers] = await Promise.all([
+    const [orders, transfers, owners] = await Promise.all([
       fetch('/api/orders', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.ok ? r.json() : []).catch(() => []),
-      fetch('/api/orders/transfers', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.ok ? r.json() : []).catch(() => [])
+      fetch('/api/orders/transfers', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch('/api/auth/owners', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.ok ? r.json() : []).catch(() => [])
     ]);
     cachedOrders = orders;
     cachedTransfers = transfers;
-  } catch { cachedOrders = []; cachedTransfers = []; }
+    cachedOwners = owners;
+  } catch { cachedOrders = []; cachedTransfers = []; cachedOwners = []; }
 }
 
 async function fetchOrdersForOwner(storeId) {
@@ -74,6 +77,7 @@ function renderAdminDashboard() {
       <button class="admin-tab" onclick="switchAdminTab('products',this)"><i class="fas fa-tshirt"></i> المنتجات</button>
       <button class="admin-tab" onclick="switchAdminTab('categories',this)"><i class="fas fa-sitemap"></i> الأقسام</button>
       <button class="admin-tab" onclick="switchAdminTab('stores',this)"><i class="fas fa-store"></i> المتاجر</button>
+      <button class="admin-tab" onclick="switchAdminTab('owners',this)"><i class="fas fa-user-tie"></i> أصحاب المتاجر</button>
     </div>
     <div class="admin-tab-content" id="adminTabOrders">
       <h2 class="section-title">جميع الطلبات</h2>
@@ -178,6 +182,17 @@ function renderAdminDashboard() {
             <button class="btn btn-danger btn-sm" onclick="deleteAdminStore(${s.id})"><i class="fas fa-trash"></i></button>
           </td>
         </tr>`).join('')}</tbody>
+      </table></div>
+    </div>
+    <div class="admin-tab-content" id="adminTabOwners" style="display:none;">
+      <h2 class="section-title">أصحاب المتاجر</h2>
+      <button class="btn btn-primary" onclick="window.showAddOwnerModal()" style="margin-bottom:20px;"><i class="fas fa-plus"></i> إضافة صاحب متجر</button>
+      <div class="table-wrapper"><table class="admin-table">
+        <thead><tr><th>#</th><th>الاسم</th><th>اسم المستخدم</th><th>المتجر</th><th></th></tr></thead>
+        <tbody>${cachedOwners.map(o => {
+          const st = getStoreById(o.storeId);
+          return `<tr><td>${o.id}</td><td>${o.name||''}</td><td>${o.username}</td><td>${st?st.name:'—'}</td><td><button class="btn btn-danger btn-sm" onclick="deleteOwner(${o.id})"><i class="fas fa-trash"></i></button></td></tr>`;
+        }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-light);">لا يوجد أصحاب متاجر</td></tr>'}
       </table></div>
     </div>`;
 }
