@@ -1,6 +1,4 @@
 import { getCart, getCartTotal, clearCart } from '../services/cart.js';
-import { getProductById } from '../services/products.js';
-import { getCurrentUser } from '../services/auth.js';
 import { getAddresses, saveAddress } from '../services/addresses.js';
 import { showToast } from './toast.js';
 

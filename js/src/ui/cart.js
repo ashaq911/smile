@@ -1,8 +1,5 @@
 import { getCart, addToCart as addToCartService, removeFromCart, updateQuantity, getCartTotal, getCartCount, clearCart } from '../services/cart.js';
-import { getProductById, getProducts } from '../services/products.js';
-import { getStoreById, getStores } from '../services/stores.js';
-import { getCategories, getSubcategories, getSubcategoryById, getCategoryById } from '../services/categories.js';
-import { getCurrentUser } from '../services/auth.js';
+import { getProductById } from '../services/products.js';
 import { showToast } from './toast.js';
 
 export function updateCartBadge() {
