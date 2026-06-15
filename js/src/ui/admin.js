@@ -28,13 +28,20 @@ async function fetchOrdersForOwner(storeId) {
     const res = await fetch('/api/orders', { headers: { 'Authorization': `Bearer ${token}` } });
     if (!res.ok) { cachedOrders = []; return; }
     const all = await res.json();
-    cachedOrders = all.filter(o => o.items && o.items.some(i => i.storeId === storeId));
-    for (const o of cachedOrders) {
+    const ownerOrders = all.filter(o => o.items && o.items.some(i => i.storeId === storeId));
+    cachedOrders = [];
+    for (const o of ownerOrders) {
       try {
         const tRes = await fetch(`/api/orders/transfers?orderId=${o.id}&storeId=${storeId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (tRes.ok) o._transfer = (await tRes.json())[0];
+        if (tRes.ok) {
+          const transfers = await tRes.json();
+          if (transfers.length > 0 && transfers[0].transferredToOwner === 1) {
+            o._transfer = transfers[0];
+            cachedOrders.push(o);
+          }
+        }
       } catch {}
     }
   } catch { cachedOrders = []; }
