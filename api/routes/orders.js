@@ -17,7 +17,7 @@ router.get('/', verifyToken, async (req, res) => {
     const items = await db.prepare(`SELECT * FROM order_items WHERE "orderId" IN (${ph.join(',')})`).all(...ids);
     const itemMap = {};
     for (const item of items) {
-      const oid = item.orderid || item.orderId || item["orderId"];
+      const oid = item.orderId;
       if (!itemMap[oid]) itemMap[oid] = [];
       itemMap[oid].push(item);
     }
@@ -38,7 +38,7 @@ router.post('/', verifyToken, async (req, res) => {
   `).all(req.user.id);
   if (cartItems.length === 0) return res.status(400).json({ error: 'السلة فارغة' });
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = cartItems.reduce((sum, item) => sum + (item.shippingfee || 0) * item.quantity, 0);
+  const shipping = cartItems.reduce((sum, item) => sum + (item.shippingFee || 0) * item.quantity, 0);
   const total = subtotal + shipping;
   const orderResult = await db.prepare(`INSERT INTO orders ("userId", customer, phone, email, address, city, payment, subtotal, shipping, total, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
     .run(req.user.id, customer, phone, email || '', address, city || '', payment || 'cod', subtotal, shipping, total, notes || '');
@@ -46,8 +46,8 @@ router.post('/', verifyToken, async (req, res) => {
   const storeAmounts = {};
   for (const item of cartItems) {
     await db.prepare('INSERT INTO order_items ("orderId", "productId", title, price, quantity, "shippingFee", "storeId") VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(orderId, item.productid, item.title, item.price, item.quantity, item.shippingfee || 0, item.storeid);
-    storeAmounts[item.storeid] = (storeAmounts[item.storeid] || 0) + item.price * item.quantity;
+      .run(orderId, item.productId, item.title, item.price, item.quantity, item.shippingFee || 0, item.storeId);
+    storeAmounts[item.storeId] = (storeAmounts[item.storeId] || 0) + item.price * item.quantity;
   }
   for (const [storeId, amount] of Object.entries(storeAmounts)) {
     await db.prepare('INSERT INTO order_transfers ("orderId", "storeId", amount) VALUES (?, ?, ?) ON CONFLICT ("orderId", "storeId") DO NOTHING')
