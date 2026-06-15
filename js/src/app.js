@@ -97,7 +97,11 @@ async function initApp() {
     await Promise.all([initStores(), initCategories(), initProducts()]);
   }
   renderUI();
-  initCart().then(() => { try { updateCartBadge(); } catch {} }).catch(() => {});
+  initCart().then(() => {
+    try { updateCartBadge(); } catch {}
+    var cp = document.getElementById('page-cart');
+    if (cp && cp.style.display !== 'none') try { renderCart(); } catch {}
+  }).catch(() => {});
 
   registerPage('', () => { initBrowse(); });
   registerPage('stores', () => { renderAllStores(); });
@@ -105,6 +109,7 @@ async function initApp() {
   registerPage('product', (p) => { renderProductDetail(); });
   registerPage('admin', () => { initAdminDashboard(); });
   registerPage('orders', () => { renderOrders(); });
+  registerPage('cart', () => { renderCart(); });
   initRouter();
 }
 

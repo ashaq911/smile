@@ -19,6 +19,8 @@ export async function addToCart(productId, quantity) {
     const success = await addToCartService(productId, qty);
     if (success) {
       updateCartBadge();
+      var cartPage = document.getElementById('page-cart');
+      if (cartPage && cartPage.style.display !== 'none') renderCart();
       showToast(`تم إضافة "${product.title}" ×${qty} إلى السلة`);
     }
   } catch (e) {
@@ -45,17 +47,15 @@ export function renderCart() {
   if (summary) summary.style.display = 'block';
 
   container.innerHTML = cart.map(item => {
-    const product = getProductById(item.id);
-    if (!product) return '';
-    const total = product.price * item.quantity;
+    const total = item.price * item.quantity;
     return `
       <div class="cart-item">
         <div class="cart-item-img">
-          ${product.image ? `<img src="${product.image}" alt="${product.title}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fas ${product.icon}\\'></i>'">` : `<i class="fas ${product.icon}"></i>`}
+          ${item.image ? `<img src="${item.image}" alt="${item.title}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fas ${item.icon}\\'></i>'">` : `<i class="fas ${item.icon || 'fa-box'}"></i>`}
         </div>
         <div class="cart-item-info">
-          <div class="cart-item-title">${product.title}</div>
-          <div class="cart-item-price">${product.price.toLocaleString()} د.ع</div>
+          <div class="cart-item-title">${item.title}</div>
+          <div class="cart-item-price">${item.price.toLocaleString()} د.ع</div>
         </div>
         <div class="cart-item-quantity">
           <button onclick="window.cartUpdateQuantity(${item.id}, -1)">−</button>
@@ -72,10 +72,7 @@ export function renderCart() {
 
   if (summary) {
     const subtotal = getCartTotal();
-    const shippingFee = cart.reduce((s, item) => {
-      const p = getProductById(item.id);
-      return Math.max(s, (p && p.shippingFee) || 0);
-    }, 0);
+    const shippingFee = cart.reduce((s, item) => Math.max(s, (item.shippingFee || 0)), 0);
     summary.innerHTML = `
       <h3>ملخص الطلب</h3>
       <div class="cart-summary-row">
