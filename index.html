@@ -54,8 +54,8 @@
 <section class="hero">
   <div class="container">
     <div class="hero-content">
-      <h1>تسوق بأفضل الأسعار</h1>
-      <p>أحدث المنتجات التقنية بأعلى جودة وأقل الأسعار.</p>
+      <h1>تسوق أحدث صيحات الموضة</h1>
+      <p>ملابس رجالية، نسائية، وأطفالية بأفضل الأسعار.</p>
     </div>
   </div>
 </section>
@@ -368,9 +368,9 @@
       <div class="form-row">
         <div class="form-group"><label>الأيقونة</label>
           <select id="storeIcon">
-            <option value="fa-store">متجر</option><option value="fa-microchip">إلكترونيات</option><option value="fa-headphones">إكسسوارات</option>
-            <option value="fa-laptop">لابتوب</option><option value="fa-mobile-alt">جوالات</option><option value="fa-tshirt">ملابس</option>
-            <option value="fa-shoe-prints">أحذية</option><option value="fa-book">كتب</option><option value="fa-couch">أثاث</option>
+            <option value="fa-tshirt" selected>ملابس</option>
+            <option value="fa-shoe-prints">أحذية</option><option value="fa-gem">إكسسوارات</option>
+            <option value="fa-store">متجر متعدد</option>
           </select>
         </div>
         <div class="form-group"><label>المالك</label><input type="text" id="storeOwner" placeholder="اسم المالك"></div>
@@ -398,14 +398,15 @@
     <form id="categoryForm" onsubmit="event.preventDefault();saveCategory()">
       <input type="hidden" id="categoryId">
       <div class="form-group"><label>المتجر</label><select id="categoryStore"></select></div>
-      <div class="form-group"><label>اسم القسم *</label><input type="text" id="categoryName" placeholder="مثال: ملابس، إلكترونيات" required></div>
+      <div class="form-group"><label>اسم القسم *</label><input type="text" id="categoryName" placeholder="مثال: رجالي، نسائي، أطفالي" required></div>
       <div class="form-group" id="subNameGroup"><label>اسم التفرع</label><input type="text" id="categorySubName" placeholder="سيتم إنشاء تفرع بهذا الاسم"></div>
       <div class="form-group"><label>الأيقونة</label>
         <select id="categoryIcon">
-          <option value="fa-tshirt">ملابس</option><option value="fa-microchip">إلكترونيات</option><option value="fa-shoe-prints">أحذية</option>
-          <option value="fa-headphones">سماعات</option><option value="fa-mobile-alt">جوالات</option><option value="fa-laptop">لابتوب</option>
-          <option value="fa-tablet-alt">أجهزة لوحية</option><option value="fa-camera">كاميرات</option><option value="fa-clock">ساعات</option>
-          <option value="fa-plug">شواحن</option><option value="fa-folder">أخرى</option>
+          <option value="fa-tshirt" selected>رجالي</option>
+          <option value="fa-female">نسائي</option><option value="fa-child">أطفال</option>
+          <option value="fa-shoe-prints">أحذية</option><option value="fa-clock">ساعات</option>
+          <option value="fa-glasses">نظارات</option><option value="fa-gem">إكسسوارات</option>
+          <option value="fa-bag-shopping">حقائب</option>
         </select>
       </div>
       <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
@@ -422,7 +423,7 @@
     <form id="subcategoryForm" onsubmit="event.preventDefault();saveSubcategory()">
       <input type="hidden" id="subcategoryId">
       <input type="hidden" id="subcategoryParent">
-      <div class="form-group"><label>اسم التفرع *</label><input type="text" id="subcategoryName" placeholder="مثال: ملابس رجالية، أحذية نسائية" required></div>
+      <div class="form-group"><label>اسم التفرع *</label><input type="text" id="subcategoryName" placeholder="مثال: قمصان، فساتين، أحذية رياضية" required></div>
       <button type="submit" class="btn btn-primary" style="width:100%;">حفظ</button>
     </form>
   </div>
@@ -450,10 +451,11 @@
       <div class="form-row">
         <div class="form-group"><label>الأيقونة</label>
           <select id="productIcon">
-            <option value="fa-mobile-alt">جوال</option><option value="fa-laptop">لابتوب</option><option value="fa-headphones">سماعات</option>
-            <option value="fa-clock">ساعة</option><option value="fa-tablet-alt">جهاز لوحي</option><option value="fa-camera">كاميرا</option>
-            <option value="fa-mouse">ماوس</option><option value="fa-plug">شاحن</option><option value="fa-tshirt">تيشيرت</option>
-            <option value="fa-shoe-prints">حذاء</option><option value="fa-box">صندوق</option>
+            <option value="fa-tshirt" selected>تيشيرت</option>
+            <option value="fa-tshirt">قميص</option><option value="fa-female">بلوزة</option>
+            <option value="fa-child">ملابس أطفال</option><option value="fa-shoe-prints">حذاء</option>
+            <option value="fa-clock">ساعة</option><option value="fa-glasses">نظارة</option>
+            <option value="fa-bag-shopping">حقيبة</option><option value="fa-gem">إكسسوار</option>
           </select>
         </div>
         <div class="form-group" style="display:flex;align-items:center;gap:8px;padding-top:24px;">

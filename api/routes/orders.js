@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get('/', verifyToken, async (req, res) => {
   let orders;
-  if (req.user.role === 'admin') {
+  if (req.user.role === 'admin' || req.user.role === 'store_owner') {
     orders = await db.prepare('SELECT * FROM orders ORDER BY "createdAt" DESC').all();
   } else {
     orders = await db.prepare('SELECT * FROM orders WHERE userId = ? ORDER BY "createdAt" DESC').all(req.user.id);
@@ -57,10 +57,15 @@ router.post('/', verifyToken, async (req, res) => {
   res.json({ id: orderId, total });
 });
 
-router.put('/:id/status', verifyToken, requireRole('admin'), async (req, res) => {
+router.put('/:id/status', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
   const { status } = req.body;
   const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
   if (!validStatuses.includes(status)) return res.status(400).json({ error: 'حالة غير صالحة' });
+  if (req.user.role === 'store_owner') {
+    const items = await db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(req.params.id);
+    const hasMyStore = items.some(i => i.storeId === req.user.storeId);
+    if (!hasMyStore) return res.status(403).json({ error: 'لا تصلاحية لك لهذا الطلب' });
+  }
   await db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, req.params.id);
   res.json({ success: true });
 });
@@ -83,9 +88,10 @@ router.get('/transfers', verifyToken, async (req, res) => {
   res.json(transfers);
 });
 
-router.post('/transfers', verifyToken, requireRole('admin'), async (req, res) => {
+router.post('/transfers', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
   const { orderId, storeId, amount, transferredToOwner } = req.body;
   if (!orderId || !storeId || amount === undefined) return res.status(400).json({ error: 'بيانات التحويل غير مكتملة' });
+  if (req.user.role === 'store_owner' && req.user.storeId !== storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
   const existing = await db.prepare('SELECT id FROM order_transfers WHERE orderId = ? AND "storeId" = ?').get(orderId, storeId);
   if (existing) {
     await db.prepare('UPDATE order_transfers SET amount=?, transferredToOwner=? WHERE id=?').run(amount, transferredToOwner ? 1 : 0, existing.id);
@@ -96,8 +102,13 @@ router.post('/transfers', verifyToken, requireRole('admin'), async (req, res) =>
   res.json({ id: result.rows[0].id });
 });
 
-router.put('/transfers/:id', verifyToken, requireRole('admin'), async (req, res) => {
+router.put('/transfers/:id', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
   const { transferredToOwner, transferPaid, transferPaymentConfirmed, customerInfoRevealed, amount } = req.body;
+  if (req.user.role === 'store_owner') {
+    const transfer = await db.prepare('SELECT * FROM order_transfers WHERE id = ?').get(req.params.id);
+    if (!transfer) return res.status(404).json({ error: 'التحويل غير موجود' });
+    if (transfer.storeId !== req.user.storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا التحويل' });
+  }
   const updates = [];
   const params = [];
   if (transferredToOwner !== undefined) { updates.push(`transferredToOwner=$${params.length + 1}`); params.push(transferredToOwner ? 1 : 0); }

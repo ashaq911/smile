@@ -8,7 +8,7 @@ function createPool() {
   }
   const pool = new Pool({
     connectionString: DATABASE_URL,
-    connectionTimeoutMillis: 30000,
+    connectionTimeoutMillis: 35000,
     idleTimeoutMillis: 300000,
     max: 3,
     ssl: { rejectUnauthorized: false }

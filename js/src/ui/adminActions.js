@@ -1,7 +1,7 @@
 import { addStore, updateStore, deleteStore, getStoreById, getStores } from '../services/stores.js';
 import { addCategory, updateCategory, deleteCategory, getCategoryById, getCategoriesByStore, addSubcategory, updateSubcategory, deleteSubcategory, getSubcategoryById, getSubcategoriesByCategory } from '../services/categories.js';
-import { addProduct, deleteProduct, getProducts, getProductsByStore, getStoreProductCount, getSubcategoryProductCount } from '../services/products.js';
-import { addStoreOwner, deleteAuthUser, getCurrentUser, getAllAuthUsers, getAuthUserById } from '../services/auth.js';
+import { addProduct, deleteProduct, getProducts, getSubcategoryProductCount } from '../services/products.js';
+import { addStoreOwner, deleteAuthUser, getCurrentUser } from '../services/auth.js';
 import { showToast } from './toast.js';
 import { initAdminDashboard } from './admin.js';
 
@@ -24,7 +24,6 @@ export function editStore(id) {
   document.getElementById('storeId').value = store.id;
   document.getElementById('storeName').value = store.name;
   document.getElementById('storeDesc').value = store.description;
-  document.getElementById('storeIcon').value = store.icon;
   document.getElementById('storeOwner').value = store.owner;
   document.getElementById('storePhone').value = store.phone;
   document.getElementById('storePaymentInfo').value = store.paymentInfo || '';
@@ -35,35 +34,44 @@ window.editStore = editStore;
 
 export async function saveStore() {
   const id = document.getElementById('storeId').value;
-  const paymentInfo = document.getElementById('storePaymentInfo').value.trim();
   const data = {
     name: document.getElementById('storeName').value.trim(),
     description: document.getElementById('storeDesc').value.trim(),
-    icon: document.getElementById('storeIcon').value || 'fa-store',
+    icon: 'fa-tshirt',
     owner: document.getElementById('storeOwner').value.trim(),
     phone: document.getElementById('storePhone').value.trim(),
-    paymentInfo: paymentInfo
+    paymentInfo: document.getElementById('storePaymentInfo').value.trim()
   };
   if (!data.name) { showToast('يرجى إدخال اسم المتجر'); return; }
   const btn = document.querySelector('#storeForm button[type="submit"]');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'; }
   try {
     await fetch('/api/ping').catch(() => {});
-    if (id) { await updateStore(parseInt(id), data); showToast('تم تحديث المتجر بنجاح'); }
+    if (id) { await updateStore(parseInt(id), data); showToast('تم تحديث المتجر'); }
     else {
       const newStore = await addStore(data.name, data.description, data.icon, data.owner, data.phone, data.paymentInfo);
-      const defaultCat = await addCategory(newStore.id, 'عام', 'fa-folder');
-      await addSubcategory(defaultCat.id, 'عام');
+      const menCat = await addCategory(newStore.id, 'رجالي', 'fa-tshirt');
+      await addSubcategory(menCat.id, 'قمصان');
+      await addSubcategory(menCat.id, 'تيشيرتات');
+      await addSubcategory(menCat.id, 'بناطيل');
+      const womenCat = await addCategory(newStore.id, 'نسائي', 'fa-female');
+      await addSubcategory(womenCat.id, 'فساتين');
+      await addSubcategory(womenCat.id, 'بلوزات');
+      await addSubcategory(womenCat.id, 'عباءات');
+      const kidsCat = await addCategory(newStore.id, 'أطفالي', 'fa-child');
+      await addSubcategory(kidsCat.id, 'ملابس أطفال');
+      await addSubcategory(kidsCat.id, 'أحذية أطفال');
+      await addCategory(newStore.id, 'إكسسوارات', 'fa-gem');
       const ownerUsername = document.getElementById('storeOwnerUsername').value.trim();
       const ownerPassword = document.getElementById('storeOwnerPassword').value.trim();
       if (ownerUsername && ownerPassword) {
         await addStoreOwner(ownerUsername, ownerPassword, data.owner || data.name, newStore.id);
-        showToast('تم إضافة المتجر وحساب صاحبه بنجاح');
-      } else { showToast('تم إضافة المتجر بنجاح'); }
+        showToast('تم إضافة المتجر وحساب صاحبه');
+      } else { showToast('تم إضافة المتجر'); }
     }
     document.getElementById('storeModal').style.display = 'none';
     initAdminDashboard();
-  } catch (e) { showToast('فشل حفظ المتجر: ' + (e.message || 'الخادم لم يستجب')); }
+  } catch (e) { showToast('فشل حفظ المتجر: ' + (e.message || 'خطأ')); }
   if (btn) { btn.disabled = false; btn.innerHTML = 'حفظ'; }
 }
 window.saveStore = saveStore;
@@ -72,22 +80,9 @@ export function closeStoreModal() { document.getElementById('storeModal').style.
 window.closeStoreModal = closeStoreModal;
 
 export async function deleteAdminStore(id) {
-  const store = getStoreById(id);
-  if (!store) return;
-  const count = getStoreProductCount(id);
-  let msg = `هل أنت متأكد من حذف المتجر "${store.name}"؟`;
-  if (count > 0) msg += `\nسيتم نقل ${count} منتج إلى المتجر الرئيسي.`;
-  if (!confirm(msg)) return;
-  try {
-    getProductsByStore(id).forEach(async p => {
-      await apiPut(`/products/${p.id}`, { storeId: 1 });
-    });
-    getCategoriesByStore(id).forEach(async c => {
-      await apiDelete(`/categories/${c.id}`);
-    });
-    await deleteStore(id);
-    showToast('تم حذف المتجر');
-  } catch (e) { showToast(e.message); }
+  if (!confirm('هل أنت متأكد من حذف هذا المتجر؟')) return;
+  try { await deleteStore(id); showToast('تم حذف المتجر'); }
+  catch (e) { showToast(e.message); }
   initAdminDashboard();
 }
 window.deleteAdminStore = deleteAdminStore;
@@ -101,8 +96,7 @@ export function showAddCategoryModal() {
   sel.innerHTML = getStores().map(s => `<option value="${s.id}">${s.name}</option>`).join('');
   const u = getCurrentUser();
   if (u && u.role === 'store_owner' && u.storeId) { sel.value = u.storeId; sel.disabled = true; }
-  const subGroup = document.getElementById('subNameGroup');
-  if (subGroup) subGroup.style.display = 'block';
+  document.getElementById('subNameGroup').style.display = 'block';
   document.getElementById('categoryModal').style.display = 'flex';
 }
 window.showAddCategoryModal = showAddCategoryModal;
@@ -111,16 +105,14 @@ export function editCategory(id) {
   const cat = getCategoryById(id);
   if (!cat) return;
   const u = getCurrentUser();
-  if (u && u.role === 'store_owner' && u.storeId !== cat.storeId) { showToast('لا تصلاحية لك لهذا القسم'); return; }
+  if (u && u.role === 'store_owner' && u.storeId !== cat.storeId) { showToast('لا تصلاحية لك'); return; }
   document.getElementById('categoryModalTitle').textContent = 'تعديل القسم';
   document.getElementById('categoryId').value = cat.id;
   document.getElementById('categoryName').value = cat.name;
-  document.getElementById('categoryIcon').value = cat.icon || 'fa-folder';
   const sel = document.getElementById('categoryStore');
-  sel.innerHTML = getStores().map(s => `<option value="${s.id}" ${s.id === cat.storeId ? 'selected' : ''}>${s.name}</option>`).join('');
+  sel.innerHTML = getStores().map(s => `<option value="${s.id}" ${s.id===cat.storeId?'selected':''}>${s.name}</option>`).join('');
   if (u && u.role === 'store_owner') sel.disabled = true;
-  const subGroup = document.getElementById('subNameGroup');
-  if (subGroup) subGroup.style.display = 'none';
+  document.getElementById('subNameGroup').style.display = 'none';
   document.getElementById('categoryModal').style.display = 'flex';
 }
 window.editCategory = editCategory;
@@ -129,15 +121,14 @@ export async function saveCategory() {
   const id = document.getElementById('categoryId').value;
   const storeId = parseInt(document.getElementById('categoryStore').value);
   const name = document.getElementById('categoryName').value.trim();
-  const icon = document.getElementById('categoryIcon').value || 'fa-folder';
   if (!name) { showToast('يرجى إدخال اسم القسم'); return; }
   try {
-    if (id) { await updateCategory(parseInt(id), { name, icon, storeId }); showToast('تم تحديث القسم'); }
+    if (id) { await updateCategory(parseInt(id), { name, storeId }); showToast('تم تحديث القسم'); }
     else {
-      const newCat = await addCategory(storeId, name, icon);
+      const newCat = await addCategory(storeId, name, 'fa-tshirt');
       const subName = document.getElementById('categorySubName').value.trim();
-      if (subName) { await addSubcategory(newCat.id, subName); showToast('تم إضافة القسم والتفرع'); }
-      else { showToast('تم إضافة القسم'); }
+      if (subName) { await addSubcategory(newCat.id, subName); }
+      showToast('تم إضافة القسم');
     }
   } catch (e) { showToast(e.message); }
   document.getElementById('categoryModal').style.display = 'none';
@@ -149,8 +140,9 @@ export function closeCategoryModal() { document.getElementById('categoryModal').
 window.closeCategoryModal = closeCategoryModal;
 
 export async function deleteAdminCategory(id) {
-  if (!confirm('هل أنت متأكد من حذف هذا القسم وجميع تفرعاته؟')) return;
-  try { await deleteCategory(id); showToast('تم حذف القسم'); } catch (e) { showToast(e.message); }
+  if (!confirm('هل أنت متأكد من حذف هذا القسم؟')) return;
+  try { await deleteCategory(id); showToast('تم حذف القسم'); }
+  catch (e) { showToast(e.message); }
   initAdminDashboard();
 }
 window.deleteAdminCategory = deleteAdminCategory;
@@ -163,11 +155,11 @@ export function showAddSubcategoryModal(categoryId) {
   document.getElementById('subcategoryParent').value = categoryId || '';
   if (categoryId) {
     const cat = getCategoryById(categoryId);
-    const existing = document.querySelector('#subcategoryModal .modal-header p');
-    if (existing) existing.remove();
     const p = document.createElement('p');
     p.style.cssText = 'color:var(--text-light);font-size:14px;';
-    p.textContent = `القسم: ${cat ? cat.name : ''}`;
+    p.textContent = 'القسم: ' + (cat ? cat.name : '');
+    const existing = document.querySelector('#subcategoryModal .modal-header p');
+    if (existing) existing.remove();
     document.querySelector('#subcategoryModal .modal-header').appendChild(p);
   }
   document.getElementById('subcategoryModal').style.display = 'flex';
@@ -194,13 +186,13 @@ window.closeSubcategoryModal = closeSubcategoryModal;
 export async function deleteAdminSubcategory(id) {
   const sub = getSubcategoryById(id);
   const pCount = getSubcategoryProductCount(id);
-  let msg = `هل أنت متأكد من حذف التفرع "${sub ? sub.name : ''}"؟`;
-  if (pCount > 0) msg += `\nسيتم إلغاء تصنيف ${pCount} منتج.`;
+  let msg = 'هل أنت متأكد من حذف التفرع "' + (sub ? sub.name : '') + '"?';
+  if (pCount > 0) msg += '\nسيتم إلغاء تصنيف ' + pCount + ' منتج.';
   if (!confirm(msg)) return;
   try {
     getProducts().filter(p => p.subcategoryId === id).forEach(async p => {
-      await fetch(`/api/products/${p.id}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+      await fetch('/api/products/' + p.id, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
         body: JSON.stringify({ subcategoryId: null })
       });
     });
@@ -216,7 +208,7 @@ window.updateSubcategorySelect = function() {
   var sid = parseInt(document.getElementById('productStore').value);
   var sub = document.getElementById('productSubcategory');
   if (!sub) return;
-  var opts = '<option value="">اختر التفرع...</option>';
+  var opts = '<option value="">اختر...</option>';
   if (sid) {
     var cats = getCategoriesByStore(sid);
     for (var i = 0; i < cats.length; i++) {
@@ -234,13 +226,14 @@ window.saveProduct = async function() {
   var sel = document.getElementById('productStore');
   var storeId = sel.disabled ? parseInt(sel.value) : (parseInt(sel.value) || 1);
   var title = document.getElementById('productTitle').value.trim();
-  var desc = document.getElementById('productDesc').value.trim();
   var price = parseFloat(document.getElementById('productPrice').value) || 0;
-  var icon = document.getElementById('productIcon').value || 'fa-box';
   var inStock = document.getElementById('productStock').checked;
   var subId = parseInt(document.getElementById('productSubcategory').value) || null;
+  var desc = document.getElementById('productDesc').value.trim();
   var ship = parseInt(document.getElementById('productShipping').value) || 0;
-  if (!title || price <= 0) { showToast('يرجى إدخال اسم المنتج وسعر صالح'); return; }
+  if (!title || price <= 0) { showToast('يرجى إدخال اسم وسعر صالح'); return; }
+  var btn = document.querySelector('#productForm button[type="button"]');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'; }
   var image = '';
   var file = document.getElementById('productImage');
   if (file && file.files && file.files[0]) {
@@ -256,7 +249,8 @@ window.saveProduct = async function() {
       });
     } catch(e) { image = ''; }
   }
-  var data = { title:title, description:desc, price:price, icon:icon, image:image, inStock:inStock, storeId:storeId, subcategoryId:subId, shippingFee:ship };
+  var data = { title:title, description:desc, price:price, icon:'fa-tshirt', image:image, inStock:inStock, storeId:storeId, subcategoryId:subId, shippingFee:ship };
+  await fetch('/api/ping').catch(function(){});
   try {
     var resp = await fetch('/api/products' + (id ? '/' + id : ''), {
       method: id ? 'PUT' : 'POST',
@@ -264,16 +258,13 @@ window.saveProduct = async function() {
       body: JSON.stringify(data)
     });
     if (!resp.ok) { var err = await resp.json().catch(function() { return {error:'خطأ'}; }); throw new Error(err.error); }
-    showToast(id ? 'تم تحديث المنتج بنجاح' : 'تم إضافة المنتج بنجاح');
+    showToast(id ? 'تم تحديث المنتج' : 'تم إضافة المنتج');
   } catch(e) { showToast(e.message || 'فشل حفظ المنتج'); }
+  if (btn) { btn.disabled = false; btn.innerHTML = 'حفظ'; }
   document.getElementById('productModal').style.display = 'none';
-  try {
-    var m = await import('../services/products.js');
-    await m.initProducts();
-  } catch(e) {}
+  try { var m = await import('../services/products.js'); await m.initProducts(); } catch(e) {}
   initAdminDashboard();
 };
-
 window.closeProductModal = function() { document.getElementById('productModal').style.display = 'none'; };
 
 export async function deleteAdminProduct(id) {
@@ -286,75 +277,58 @@ window.deleteAdminProduct = deleteAdminProduct;
 // ===== ORDERS =====
 export async function updateOrderStatus(orderId, newStatus) {
   try {
-    const res = await fetch(`/api/orders/${orderId}/status`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+    const res = await fetch('/api/orders/' + orderId + '/status', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
       body: JSON.stringify({ status: newStatus })
     });
     if (!res.ok) throw new Error();
     showToast('تم تحديث حالة الطلب');
-  } catch { showToast('فشل تحديث حالة الطلب'); }
+  } catch { showToast('فشل تحديث الحالة'); }
   initAdminDashboard();
 }
 window.updateOrderStatus = updateOrderStatus;
 
-export async function deleteOrder(orderId) {
-  if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
-  try {
-    const res = await fetch(`/api/orders/${orderId}`, {
-      method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` }
-    });
-    if (!res.ok) throw new Error();
-    showToast('تم حذف الطلب');
-  } catch { showToast('فشل حذف الطلب'); }
-  initAdminDashboard();
-}
-window.deleteOrder = deleteOrder;
-
 // ===== TRANSFER =====
 export function showTransferModal(orderId, storeId, amount) {
-  const modal = document.getElementById('transferModal');
+  var modal = document.getElementById('transferModal');
   if (!modal) return;
   document.getElementById('transferOrderId').value = orderId;
   document.getElementById('transferStoreId').value = storeId;
   document.getElementById('transferAmount').value = amount;
-  document.getElementById('transferAmountLabel').textContent = 'المبلغ المطلوب تحويله (د.ع):';
   modal.style.display = 'flex';
 }
 window.showTransferModal = showTransferModal;
 
 export async function confirmTransfer() {
-  const orderId = parseInt(document.getElementById('transferOrderId').value);
-  const storeId = parseInt(document.getElementById('transferStoreId').value);
-  const transferAmount = parseFloat(document.getElementById('transferAmount').value) || 0;
-  if (transferAmount <= 0) { showToast('يرجى إدخال مبلغ صحيح'); return; }
+  var orderId = parseInt(document.getElementById('transferOrderId').value);
+  var storeId = parseInt(document.getElementById('transferStoreId').value);
+  var amount = parseFloat(document.getElementById('transferAmount').value) || 0;
+  if (amount <= 0) { showToast('يرجى إدخال مبلغ صحيح'); return; }
   try {
-    const transferRes = await fetch('/api/orders/transfers', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-      body: JSON.stringify({ orderId, storeId, amount: transferAmount, transferredToOwner: true })
+    var res = await fetch('/api/orders/transfers', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ orderId, storeId, amount, transferredToOwner: true })
     });
-    if (!transferRes.ok) throw new Error();
-    closeTransferModal();
-    showToast('تم تحويل الطلب إلى صاحب المتجر');
+    if (!res.ok) throw new Error();
+    document.getElementById('transferModal').style.display = 'none';
+    showToast('تم تحويل الطلب');
   } catch { showToast('فشل تحويل الطلب'); }
   initAdminDashboard();
 }
 window.confirmTransfer = confirmTransfer;
 
-export function closeTransferModal() {
-  const modal = document.getElementById('transferModal');
-  if (modal) modal.style.display = 'none';
-}
+export function closeTransferModal() { var m = document.getElementById('transferModal'); if (m) m.style.display = 'none'; }
 window.closeTransferModal = closeTransferModal;
 
 export async function confirmAdminPayment(transferId, orderId) {
-  if (!confirm('تأكيد استلام المبلغ من صاحب المتجر؟ بعد التأكيد سيتم الكشف عن معلومات الزبون')) return;
+  if (!confirm('تأكيد استلام المبلغ؟ سيتم كشف معلومات الزبون')) return;
   try {
-    const res = await fetch(`/api/orders/transfers/${transferId}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+    var res = await fetch('/api/orders/transfers/' + transferId, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
       body: JSON.stringify({ transferPaid: true, customerInfoRevealed: true })
     });
     if (!res.ok) throw new Error();
-    showToast('تم تأكيد الدفع! تم الكشف عن معلومات الزبون لصاحب المتجر');
+    showToast('تم تأكيد الدفع!');
   } catch { showToast('فشل تأكيد الدفع'); }
   initAdminDashboard();
 }
@@ -362,40 +336,37 @@ window.confirmAdminPayment = confirmAdminPayment;
 
 // ===== STORE OWNER PAY =====
 export function showPaymentModal(orderId, storeId) {
-  const store = getStoreById(storeId);
-  const modal = document.getElementById('storePaymentModal');
+  var store = getStoreById(storeId);
+  var modal = document.getElementById('storePaymentModal');
   if (!modal) return;
   document.getElementById('payOrderId').value = orderId;
   document.getElementById('payStoreId').value = storeId;
-  document.getElementById('payBankInfo').textContent = (store && store.paymentInfo) || 'لم يتم إضافة معلومات الدفع بعد';
+  document.getElementById('payBankInfo').textContent = (store && store.paymentInfo) || 'لم يتم إضافة معلومات الدفع';
   modal.style.display = 'flex';
 }
 window.showPaymentModal = showPaymentModal;
 
-export function closePaymentModal() {
-  const modal = document.getElementById('storePaymentModal');
-  if (modal) modal.style.display = 'none';
-}
+export function closePaymentModal() { var m = document.getElementById('storePaymentModal'); if (m) m.style.display = 'none'; }
 window.closePaymentModal = closePaymentModal;
 
 export async function confirmStorePayment() {
-  const orderId = parseInt(document.getElementById('payOrderId').value);
-  const storeId = parseInt(document.getElementById('payStoreId').value);
+  var orderId = parseInt(document.getElementById('payOrderId').value);
+  var storeId = parseInt(document.getElementById('payStoreId').value);
   try {
-    const res = await fetch(`/api/orders/transfers?orderId=${orderId}&storeId=${storeId}`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
+    var res = await fetch('/api/orders/transfers?orderId=' + orderId + '&storeId=' + storeId, {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
     });
     if (res.ok) {
-      const transfers = await res.json();
+      var transfers = await res.json();
       if (transfers.length > 0) {
-        await fetch(`/api/orders/transfers/${transfers[0].id}`, {
-          method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+        await fetch('/api/orders/transfers/' + transfers[0].id, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
           body: JSON.stringify({ transferPaymentConfirmed: true })
         });
       }
     }
     closePaymentModal();
-    showToast('تم إرسال طلب الدفع، في انتظار تأكيد المدير');
+    showToast('تم إرسال طلب الدفع');
   } catch { showToast('فشل تأكيد الدفع'); }
   initAdminDashboard();
 }
@@ -405,28 +376,27 @@ window.confirmStorePayment = confirmStorePayment;
 export function showAddOwnerModal() {
   document.getElementById('ownerForm').reset();
   document.getElementById('ownerId').value = '';
-  const sel = document.getElementById('ownerStore');
-  sel.innerHTML = getStores().map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  var sel = document.getElementById('ownerStore');
+  sel.innerHTML = getStores().map(s => '<option value="' + s.id + '">' + s.name + '</option>').join('');
   document.getElementById('ownerModal').style.display = 'flex';
 }
 window.showAddOwnerModal = showAddOwnerModal;
 
 export async function saveOwner() {
-  const username = document.getElementById('ownerUsername').value.trim();
-  const password = document.getElementById('ownerPassword').value.trim();
-  const name = document.getElementById('ownerName').value.trim();
-  const storeId = parseInt(document.getElementById('ownerStore').value);
-  if (!username || !password || !name || !storeId) { showToast('يرجى تعبئة جميع الحقول'); return; }
-  const btn = document.querySelector('#ownerForm button[type="submit"]');
+  var username = document.getElementById('ownerUsername').value.trim();
+  var password = document.getElementById('ownerPassword').value.trim();
+  var name = document.getElementById('ownerName').value.trim();
+  var storeId = parseInt(document.getElementById('ownerStore').value);
+  if (!username || !password || !name || !storeId) { showToast('يرجى تعبئة الحقول'); return; }
+  var btn = document.querySelector('#ownerForm button[type="submit"]');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'; }
   try {
-    // Warm up DB connection first
     await fetch('/api/ping').catch(() => {});
     await addStoreOwner(username, password, name, storeId);
-    showToast('تم إضافة صاحب المتجر بنجاح');
+    showToast('تم إضافة صاحب المتجر');
     document.getElementById('ownerModal').style.display = 'none';
     initAdminDashboard();
-  } catch (e) { showToast('فشل إضافة صاحب المتجر: ' + (e.message || 'الخادم لم يستجب')); }
+  } catch (e) { showToast('فشل الإضافة: ' + (e.message || 'خطأ')); }
   if (btn) { btn.disabled = false; btn.innerHTML = 'حفظ'; }
 }
 window.saveOwner = saveOwner;
@@ -435,47 +405,20 @@ export function closeOwnerModal() { document.getElementById('ownerModal').style.
 window.closeOwnerModal = closeOwnerModal;
 
 export async function deleteOwner(userId) {
-  if (!confirm('هل أنت متأكد من حذف صاحب المتجر هذا؟')) return;
-  try {
-    await deleteAuthUser(userId);
-    showToast('تم حذف صاحب المتجر');
-  } catch (e) { showToast(e.message); }
+  if (!confirm('هل أنت متأكد من حذف صاحب المتجر؟')) return;
+  try { await deleteAuthUser(userId); showToast('تم الحذف'); }
+  catch (e) { showToast(e.message); }
   initAdminDashboard();
 }
 window.deleteOwner = deleteOwner;
 
-// ===== ADMIN TABS =====
+// ===== TABS =====
 export function switchAdminTab(tab, btn) {
   document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.admin-tab-content').forEach(c => c.style.display = 'none');
-  const map = { orders: 'Orders', categories: 'Categories', products: 'Products', stores: 'Stores', owners: 'Owners', users: 'Users', transfers: 'Transfers', reports: 'Reports', alerts: 'Alerts' };
-  const el = document.getElementById('adminTab' + map[tab]);
+  var map = { orders:'Orders', products:'Products', categories:'Categories', stores:'Stores', owners:'Owners', transfers:'Transfers', users:'Users' };
+  var el = document.getElementById('adminTab' + (map[tab] || tab.charAt(0).toUpperCase() + tab.slice(1)));
   if (el) el.style.display = 'block';
 }
 window.switchAdminTab = switchAdminTab;
-
-export function exportReport() {
-  const orders = JSON.parse(localStorage.getItem('export_orders') || '[]');
-  const stores = JSON.parse(localStorage.getItem('export_stores') || '[]');
-  const now = new Date().toISOString().replace(/[:.]/g, '-').slice(0,19);
-  const token = localStorage.getItem('auth_token');
-  fetch('/api/orders', { headers: { 'Authorization': `Bearer ${token}` } })
-    .then(r => r.json())
-    .then(orders => {
-      let csv = 'التقرير,سمايل\n';
-      csv += `تاريخ التصدير,${now}\n\n`;
-      csv += 'رقم الطلب,العميل,الإجمالي,الحالة,التاريخ\n';
-      orders.forEach(o => {
-        csv += `${o.id},${o.customer},${o.total},${o.status},${o.createdAt}\n`;
-      });
-      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `smayel-report-${now}.csv`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      showToast('تم تصدير التقرير بنجاح');
-    });
-}
-window.exportReport = exportReport;

@@ -26,8 +26,10 @@ router.post('/', verifyToken, requireRole('admin', 'store_owner'), async (req, r
   const { title, description, price, oldPrice, icon, image, inStock, storeId, subcategoryId, shippingFee } = req.body;
   if (!title || !price || !storeId) return res.status(400).json({ error: 'بيانات المنتج غير مكتملة' });
   if (req.user.role === 'store_owner' && req.user.storeId !== storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
-  const result = await db.prepare(`INSERT INTO products (title, description, price, oldPrice, icon, image, inStock, "storeId", subcategoryId, shippingFee) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
-    .run(title, description || '', price, oldPrice || null, icon || 'fa-box', image || '', inStock ?? 1, storeId, subcategoryId || null, shippingFee || 0);
+  const result = await db.prepare('SELECT 1 AS warmup').get().then(() => {
+    return db.prepare(`INSERT INTO products (title, description, price, oldPrice, icon, image, inStock, "storeId", subcategoryId, shippingFee) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
+      .run(title, description || '', price, oldPrice || null, icon || 'fa-box', image || '', inStock ?? 1, storeId, subcategoryId || null, shippingFee || 0);
+  });
   res.json({ id: result.rows[0].id });
 });
 
@@ -40,7 +42,10 @@ router.put('/:id', verifyToken, requireRole('admin', 'store_owner'), async (req,
   res.json({ success: true });
 });
 
-router.delete('/:id', verifyToken, requireRole('admin'), async (req, res) => {
+router.delete('/:id', verifyToken, requireRole('admin', 'store_owner'), async (req, res) => {
+  const prod = await db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+  if (!prod) return res.status(404).json({ error: 'المنتج غير موجود' });
+  if (req.user.role === 'store_owner' && req.user.storeId !== prod.storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المنتج' });
   await db.prepare('DELETE FROM products WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });

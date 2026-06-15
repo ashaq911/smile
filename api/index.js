@@ -1,3 +1,4 @@
+require('express-async-errors');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -15,10 +16,12 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Global timeout
 app.use((req, res, next) => {
   const timer = setTimeout(() => {
     if (!res.headersSent) res.status(504).json({ error: 'الخادم لم يستجب، حاول مرة أخرى' });
-  }, 35000);
+  }, 60000);
   res.on('finish', () => clearTimeout(timer));
   next();
 });
@@ -61,6 +64,12 @@ app.use(express.static(path.join(__dirname, '..')));
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'API endpoint not found' });
   res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+// Global error handler (must be after routes)
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err?.message || err);
+  if (!res.headersSent) res.status(500).json({ error: err?.message || 'خطأ داخلي في الخادم' });
 });
 
 module.exports = app;

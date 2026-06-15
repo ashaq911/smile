@@ -80,4 +80,23 @@ router.delete('/subcategories/:id', verifyToken, requireRole('admin', 'store_own
   res.json({ success: true });
 });
 
+// Cleanup: delete non-clothing categories and set all stores to clothing icon
+router.post('/cleanup', verifyToken, requireRole('admin'), async (req, res) => {
+  const clothingNames = ['رجالي', 'نسائي', 'أطفال', 'أطفالي', 'إكسسوارات', 'أحذية', 'رجالية', 'نسائية', 'أطفالية', 'ملابس'];
+  const cats = await db.prepare('SELECT * FROM categories').all();
+  for (const cat of cats) {
+    const isClothing = clothingNames.some(n => cat.name.includes(n));
+    if (!isClothing) {
+      const subs = await db.prepare('SELECT id FROM subcategories WHERE categoryId = ?').all(cat.id);
+      for (const sub of subs) {
+        await db.prepare('UPDATE products SET "subcategoryId" = NULL WHERE "subcategoryId" = ?').run(sub.id);
+        await db.prepare('DELETE FROM subcategories WHERE id = ?').run(sub.id);
+      }
+      await db.prepare('DELETE FROM categories WHERE id = ?').run(cat.id);
+    }
+  }
+  await db.prepare('UPDATE stores SET icon = ? WHERE icon NOT IN (?,?,?,?)').run('fa-tshirt', 'fa-tshirt', 'fa-shoe-prints', 'fa-gem', 'fa-store');
+  res.json({ success: true, message: 'تم تنظيف الأقسام غير المتعلقة بالملابس' });
+});
+
 module.exports = router;
