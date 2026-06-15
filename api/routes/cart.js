@@ -6,8 +6,8 @@ const router = express.Router();
 
 router.get('/', verifyToken, async (req, res) => {
   const items = await db.prepare(`
-    SELECT ci.id, ci.productId, ci.quantity, p.title, p.price, p.oldPrice, p.icon, p.image, p."storeId", p.shippingFee, p.inStock
-    FROM cart_items ci JOIN products p ON ci.productId = p.id
+    SELECT ci.id, ci."productId", ci.quantity, p.title, p.price, p."oldPrice", p.icon, p.image, p."storeId", p."shippingFee", p."inStock"
+    FROM cart_items ci JOIN products p ON ci."productId" = p.id
     WHERE ci."userId" = ?
   `).all(req.user.id);
   res.json(items);

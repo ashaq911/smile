@@ -58,16 +58,16 @@ router.get('/count/:storeId', async (req, res) => {
 });
 
 router.get('/category-count/:categoryId', async (req, res) => {
-  const subs = await db.prepare('SELECT id FROM subcategories WHERE categoryId = ?').all(req.params.categoryId);
+  const subs = await db.prepare('SELECT id FROM subcategories WHERE "categoryId" = ?').all(req.params.categoryId);
   if (subs.length === 0) return res.json({ count: 0 });
   const placeholders = subs.map((_, i) => `$${i + 1}`).join(',');
   const ids = subs.map(s => s.id);
-  const result = await db.prepare(`SELECT COUNT(*) as count FROM products WHERE subcategoryId IN (${placeholders})`).all(...ids);
+  const result = await db.prepare(`SELECT COUNT(*) as count FROM products WHERE "subcategoryId" IN (${placeholders})`).all(...ids);
   res.json(result[0] || { count: 0 });
 });
 
 router.get('/subcategory-count/:subcategoryId', async (req, res) => {
-  const count = await db.prepare('SELECT COUNT(*) as count FROM products WHERE subcategoryId = ?').get(req.params.subcategoryId);
+  const count = await db.prepare('SELECT COUNT(*) as count FROM products WHERE "subcategoryId" = ?').get(req.params.subcategoryId);
   res.json(count);
 });
 

@@ -62,7 +62,7 @@ router.put('/:id/status', verifyToken, requireRole('admin', 'store_owner'), asyn
   const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
   if (!validStatuses.includes(status)) return res.status(400).json({ error: 'حالة غير صالحة' });
   if (req.user.role === 'store_owner') {
-    const items = await db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(req.params.id);
+    const items = await db.prepare('SELECT * FROM order_items WHERE "orderId" = ?').all(req.params.id);
     const hasMyStore = items.some(i => i.storeId === req.user.storeId);
     if (!hasMyStore) return res.status(403).json({ error: 'لا تصلاحية لك لهذا الطلب' });
   }
@@ -75,7 +75,7 @@ router.get('/transfers', verifyToken, async (req, res) => {
   let sql = `
     SELECT ot.*, o.customer, o.total, s.name as storeName
     FROM order_transfers ot
-    JOIN orders o ON ot.orderId = o.id
+    JOIN orders o ON ot."orderId" = o.id
     JOIN stores s ON ot."storeId" = s.id
   `;
   const params = [];
@@ -92,12 +92,12 @@ router.post('/transfers', verifyToken, requireRole('admin', 'store_owner'), asyn
   const { orderId, storeId, amount, transferredToOwner } = req.body;
   if (!orderId || !storeId || amount === undefined) return res.status(400).json({ error: 'بيانات التحويل غير مكتملة' });
   if (req.user.role === 'store_owner' && req.user.storeId !== storeId) return res.status(403).json({ error: 'لا تصلاحية لك لهذا المتجر' });
-  const existing = await db.prepare('SELECT id FROM order_transfers WHERE orderId = ? AND "storeId" = ?').get(orderId, storeId);
+  const existing = await db.prepare('SELECT id FROM order_transfers WHERE "orderId" = ? AND "storeId" = ?').get(orderId, storeId);
   if (existing) {
-    await db.prepare('UPDATE order_transfers SET amount=?, transferredToOwner=? WHERE id=?').run(amount, transferredToOwner ? 1 : 0, existing.id);
+    await db.prepare('UPDATE order_transfers SET amount=?, "transferredToOwner"=? WHERE id=?').run(amount, transferredToOwner ? 1 : 0, existing.id);
     return res.json({ id: existing.id });
   }
-  const result = await db.prepare('INSERT INTO order_transfers (orderId, "storeId", amount, transferredToOwner) VALUES (?, ?, ?, ?) RETURNING id')
+  const result = await db.prepare('INSERT INTO order_transfers ("orderId", "storeId", amount, "transferredToOwner") VALUES (?, ?, ?, ?) RETURNING id')
     .run(orderId, storeId, amount, transferredToOwner ? 1 : 0);
   res.json({ id: result.rows[0].id });
 });
@@ -111,10 +111,10 @@ router.put('/transfers/:id', verifyToken, requireRole('admin', 'store_owner'), a
   }
   const updates = [];
   const params = [];
-  if (transferredToOwner !== undefined) { updates.push(`transferredToOwner=$${params.length + 1}`); params.push(transferredToOwner ? 1 : 0); }
-  if (transferPaid !== undefined) { updates.push(`transferPaid=$${params.length + 1}`); params.push(transferPaid ? 1 : 0); }
-  if (transferPaymentConfirmed !== undefined) { updates.push(`transferPaymentConfirmed=$${params.length + 1}`); params.push(transferPaymentConfirmed ? 1 : 0); }
-  if (customerInfoRevealed !== undefined) { updates.push(`customerInfoRevealed=$${params.length + 1}`); params.push(customerInfoRevealed ? 1 : 0); }
+  if (transferredToOwner !== undefined) { updates.push(`"transferredToOwner"=$${params.length + 1}`); params.push(transferredToOwner ? 1 : 0); }
+  if (transferPaid !== undefined) { updates.push(`"transferPaid"=$${params.length + 1}`); params.push(transferPaid ? 1 : 0); }
+  if (transferPaymentConfirmed !== undefined) { updates.push(`"transferPaymentConfirmed"=$${params.length + 1}`); params.push(transferPaymentConfirmed ? 1 : 0); }
+  if (customerInfoRevealed !== undefined) { updates.push(`"customerInfoRevealed"=$${params.length + 1}`); params.push(customerInfoRevealed ? 1 : 0); }
   if (amount !== undefined) { updates.push(`amount=$${params.length + 1}`); params.push(amount); }
   if (updates.length === 0) return res.status(400).json({ error: 'لا توجد تحديثات' });
   params.push(req.params.id);
