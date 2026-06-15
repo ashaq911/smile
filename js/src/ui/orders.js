@@ -35,10 +35,8 @@ export async function renderOrders() {
     const orderShipping = order.items.reduce((s, i) => Math.max(s, i.shippingFee || 0), 0);
     const transferred = order.transfers && order.transfers.some(t => t.transferredToOwner === 1);
     const deletable = !transferred && order.status !== 'cancelled';
-    return `<div class="order-card" style="position:relative;">
-      ${transferred ? '<div style="position:absolute;top:12px;left:12px;background:var(--warning);color:#333;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;"><i class="fas fa-exchange-alt"></i> تم التحويل للمتجر</div>' : ''}
-      ${deletable ? `<button class="btn btn-danger btn-sm" onclick="window.deleteCustomerOrder(${order.id})" style="position:absolute;bottom:12px;left:12px;" title="حذف الطلب"><i class="fas fa-trash"></i> حذف</button>` : ''}
-      <div class="order-header"><div><span class="order-id">طلب #${order.id}</span><span style="color:var(--text-light);font-size:13px;margin-right:12px;">${order.createdAt || ''}</span></div><span class="order-status status-${order.status}">${statusLabels[order.status] || order.status}</span></div>
+    return `<div class="order-card">
+      <div class="order-header"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="order-id">طلب #${order.id}</span><span style="color:var(--text-light);font-size:13px;">${order.createdAt || ''}</span></div><div style="display:flex;align-items:center;gap:8px;">${deletable ? `<button class="btn btn-danger btn-sm" onclick="window.deleteCustomerOrder(${order.id})" title="حذف الطلب"><i class="fas fa-trash"></i></button>` : ''}${transferred ? '<span style="background:var(--warning);color:#333;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;"><i class="fas fa-exchange-alt"></i> تم التحويل</span>' : ''}<span class="order-status status-${order.status}">${statusLabels[order.status] || order.status}</span></div></div>
       <div class="order-items">${order.items.map(item => {
         return `<div class="order-item"><span>${item.title} × ${item.quantity}</span><span>${(item.price * item.quantity).toLocaleString()} د.ع</span></div>`;
       }).join('')}</div>
